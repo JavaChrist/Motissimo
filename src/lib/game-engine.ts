@@ -1,257 +1,132 @@
 import type { Level } from "./levels";
+import { LETTER_SCORES } from "./themes";
 
-export interface Tile {
-  id: string;
-  letter: string;
-  col: number;
+export interface TilePos {
   row: number;
-  selected: boolean;
-  matched: boolean;
-  selectionOrder: number;
+  col: number;
+  letter: string;
 }
 
 export interface GameState {
-  tiles: Tile[];
-  cols: number;
+  grid: string[][];
   rows: number;
+  cols: number;
+  selection: TilePos[];
   foundWords: string[];
-  currentSelection: string[];
   targetWords: string[];
-  bonusWords: string[];
   score: number;
   hintsUsed: number;
   startTime: number;
   isComplete: boolean;
-  category: string;
-  hint: string;
+  title: string;
+  theme: string;
   levelId: number;
-}
-
-const FILLER_LETTERS = "AEIOURSTNLCDPMFBGHJKVWXYZQ";
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+  difficulty: 1 | 2 | 3;
 }
 
 export function createGameState(level: Level): GameState {
-  const allLetters = level.words.join("").split("");
-  const totalCells = Math.ceil(allLetters.length / level.cols) * level.cols;
-  const fillCount = totalCells - allLetters.length;
-
-  const fillers: string[] = [];
-  for (let i = 0; i < fillCount; i++) {
-    fillers.push(FILLER_LETTERS[Math.floor(Math.random() * FILLER_LETTERS.length)]);
-  }
-
-  const allShuffled = shuffleArray([...allLetters, ...fillers]);
-  const rows = Math.ceil(allShuffled.length / level.cols);
-
-  const tiles: Tile[] = allShuffled.map((letter, idx) => ({
-    id: `tile-${idx}`,
-    letter,
-    col: idx % level.cols,
-    row: Math.floor(idx / level.cols),
-    selected: false,
-    matched: false,
-    selectionOrder: -1,
-  }));
-
   return {
-    tiles,
-    cols: level.cols,
-    rows,
+    grid: level.grid,
+    rows: level.grid.length,
+    cols: level.grid[0].length,
+    selection: [],
     foundWords: [],
-    currentSelection: [],
     targetWords: [...level.words],
-    bonusWords: [],
     score: 0,
     hintsUsed: 0,
     startTime: Date.now(),
     isComplete: false,
-    category: level.category,
-    hint: level.hint,
+    title: level.title,
+    theme: level.theme,
     levelId: level.id,
+    difficulty: level.difficulty,
   };
 }
 
-export function selectTile(state: GameState, tileId: string): GameState {
-  const tile = state.tiles.find((t) => t.id === tileId);
-  if (!tile || tile.matched) return state;
+function areAdjacent(a: TilePos, b: TilePos): boolean {
+  return Math.abs(a.row - b.row) <= 1 && Math.abs(a.col - b.col) <= 1;
+}
 
-  if (tile.selected) {
-    const order = tile.selectionOrder;
-    const newTiles = state.tiles.map((t) => {
-      if (t.selectionOrder > order) {
-        return { ...t, selected: false, selectionOrder: -1 };
-      }
-      if (t.id === tileId) {
-        return { ...t, selected: false, selectionOrder: -1 };
-      }
-      return t;
-    });
-    const newSelection = newTiles
-      .filter((t) => t.selected)
-      .sort((a, b) => a.selectionOrder - b.selectionOrder)
-      .map((t) => t.id);
-    return { ...state, tiles: newTiles, currentSelection: newSelection };
+function isAlreadySelected(selection: TilePos[], pos: TilePos): boolean {
+  return selection.some((s) => s.row === pos.row && s.col === pos.col);
+}
+
+export function addToSelection(state: GameState, row: number, col: number): GameState {
+  const pos: TilePos = { row, col, letter: state.grid[row][col] };
+
+  if (isAlreadySelected(state.selection, pos)) {
+    const idx = state.selection.findIndex((s) => s.row === row && s.col === col);
+    if (idx === state.selection.length - 1) {
+      return { ...state, selection: state.selection.slice(0, -1) };
+    }
+    return { ...state, selection: state.selection.slice(0, idx + 1) };
   }
 
-  const selectionOrder = state.currentSelection.length;
-  const newTiles = state.tiles.map((t) =>
-    t.id === tileId ? { ...t, selected: true, selectionOrder } : t
-  );
-  return {
-    ...state,
-    tiles: newTiles,
-    currentSelection: [...state.currentSelection, tileId],
-  };
+  if (state.selection.length > 0) {
+    const last = state.selection[state.selection.length - 1];
+    if (!areAdjacent(last, pos)) return state;
+  }
+
+  return { ...state, selection: [...state.selection, pos] };
 }
 
 export function clearSelection(state: GameState): GameState {
-  const newTiles = state.tiles.map((t) => ({
-    ...t,
-    selected: false,
-    selectionOrder: -1,
-  }));
-  return { ...state, tiles: newTiles, currentSelection: [] };
+  return { ...state, selection: [] };
 }
 
 export function getCurrentWord(state: GameState): string {
-  return state.currentSelection
-    .map((id) => state.tiles.find((t) => t.id === id)!)
-    .map((t) => t.letter)
-    .join("");
+  return state.selection.map((s) => s.letter).join("");
 }
 
 export function submitWord(state: GameState): {
   state: GameState;
-  result: "correct" | "bonus" | "wrong";
+  result: "correct" | "already" | "wrong";
 } {
   const word = getCurrentWord(state);
 
-  if (state.foundWords.includes(word) || state.bonusWords.includes(word)) {
-    return { state: clearSelection(state), result: "wrong" };
+  if (state.foundWords.includes(word)) {
+    return { state: clearSelection(state), result: "already" };
   }
 
   const isTarget = state.targetWords.includes(word);
-  const isValidBonus = !isTarget && word.length >= 3 && isRealWord(word);
 
-  if (!isTarget && !isValidBonus) {
+  if (!isTarget) {
     return { state: clearSelection(state), result: "wrong" };
   }
 
-  const matchedIds = new Set(state.currentSelection);
-  let newTiles = state.tiles.map((t) =>
-    matchedIds.has(t.id)
-      ? { ...t, matched: true, selected: false, selectionOrder: -1 }
-      : { ...t, selected: false, selectionOrder: -1 }
-  );
-
-  newTiles = applyGravity(newTiles, state.cols);
-
-  const newFoundWords = isTarget
-    ? [...state.foundWords, word]
-    : state.foundWords;
-  const newBonusWords = isValidBonus
-    ? [...state.bonusWords, word]
-    : state.bonusWords;
-
-  const wordScore = isTarget ? word.length * 100 : word.length * 50;
-  const isComplete =
-    isTarget &&
-    state.targetWords.every((w) => newFoundWords.includes(w));
+  const wordScore = word.split("").reduce((sum, l) => sum + (LETTER_SCORES[l] ?? 1), 0) * 10;
+  const newFoundWords = [...state.foundWords, word];
+  const isComplete = state.targetWords.every((w) => newFoundWords.includes(w));
 
   return {
     state: {
       ...state,
-      tiles: newTiles,
       foundWords: newFoundWords,
-      bonusWords: newBonusWords,
-      currentSelection: [],
+      selection: [],
       score: state.score + wordScore,
       isComplete,
     },
-    result: isTarget ? "correct" : "bonus",
+    result: "correct",
   };
 }
 
-function applyGravity(tiles: Tile[], cols: number): Tile[] {
-  const columns: (Tile | null)[][] = [];
+export function useHintReveal(state: GameState): GameState {
+  const remaining = state.targetWords.filter((w) => !state.foundWords.includes(w));
+  if (remaining.length === 0) return state;
 
-  for (let c = 0; c < cols; c++) {
-    const colTiles = tiles
-      .filter((t) => t.col === c)
-      .sort((a, b) => a.row - b.row);
-    columns.push(colTiles);
-  }
-
-  const result: Tile[] = [];
-
-  for (let c = 0; c < cols; c++) {
-    const active = columns[c].filter((t) => t && !t.matched) as Tile[];
-    const maxRow = columns[c].length;
-
-    active.forEach((tile, idx) => {
-      const newRow = maxRow - active.length + idx;
-      result.push({ ...tile, row: newRow });
-    });
-
-    const matched = columns[c].filter((t) => t && t.matched) as Tile[];
-    matched.forEach((tile, idx) => {
-      result.push({ ...tile, row: idx });
-    });
-  }
-
-  return result;
-}
-
-export function useHint(
-  state: GameState,
-  type: "reveal" | "shuffle"
-): GameState {
-  if (type === "shuffle") {
-    const activeTiles = state.tiles.filter((t) => !t.matched);
-    const shuffledLetters = shuffleArray(activeTiles.map((t) => t.letter));
-    let idx = 0;
-    const newTiles = state.tiles.map((t) => {
-      if (t.matched) return t;
-      return { ...t, letter: shuffledLetters[idx++], selected: false, selectionOrder: -1 };
-    });
-    return {
-      ...clearSelection(state),
-      tiles: newTiles,
-      hintsUsed: state.hintsUsed + 1,
-    };
-  }
-
-  const remainingWords = state.targetWords.filter(
-    (w) => !state.foundWords.includes(w)
-  );
-  if (remainingWords.length === 0) return state;
-
-  const nextWord = remainingWords[0];
-  const firstLetter = nextWord[0];
-  const activeTiles = state.tiles.filter(
-    (t) => !t.matched && !t.selected && t.letter === firstLetter
-  );
-  if (activeTiles.length === 0) return state;
-
-  const hintTile = activeTiles[0];
-  const newTiles = state.tiles.map((t) =>
-    t.id === hintTile.id ? { ...t, selected: true, selectionOrder: 0 } : t
-  );
+  const shortest = remaining.reduce((a, b) => (a.length <= b.length ? a : b));
+  const path = findWordPath(state.grid, shortest);
+  if (!path || path.length === 0) return state;
 
   return {
     ...state,
-    tiles: newTiles,
-    currentSelection: [hintTile.id],
+    selection: [path[0]],
     hintsUsed: state.hintsUsed + 1,
   };
+}
+
+export function useHintShuffle(state: GameState): GameState {
+  return { ...state, hintsUsed: state.hintsUsed + 1 };
 }
 
 export function calculateStars(state: GameState): number {
@@ -260,27 +135,41 @@ export function calculateStars(state: GameState): number {
   return 1;
 }
 
-export function getElapsedTime(state: GameState): number {
-  return Math.floor((Date.now() - state.startTime) / 1000);
+function findWordPath(grid: string[][], word: string): TilePos[] | null {
+  const rows = grid.length;
+  const cols = grid[0].length;
+
+  function dfs(r: number, c: number, idx: number, visited: Set<string>, path: TilePos[]): TilePos[] | null {
+    if (idx === word.length) return path;
+
+    const dirs = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+      const key = `${nr},${nc}`;
+      if (visited.has(key)) continue;
+      if (grid[nr][nc] !== word[idx]) continue;
+
+      visited.add(key);
+      const result = dfs(nr, nc, idx + 1, visited, [...path, { row: nr, col: nc, letter: grid[nr][nc] }]);
+      if (result) return result;
+      visited.delete(key);
+    }
+    return null;
+  }
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c] !== word[0]) continue;
+      const visited = new Set([`${r},${c}`]);
+      const result = dfs(r, c, 1, visited, [{ row: r, col: c, letter: grid[r][c] }]);
+      if (result) return result;
+    }
+  }
+  return null;
 }
 
-const COMMON_FRENCH_WORDS = new Set([
-  "AIR", "AMI", "ANE", "ARC", "ART", "BAL", "BAS", "BEC", "BIS", "BOL",
-  "BON", "BUT", "CAP", "CAS", "CLE", "COL", "COU", "CRI", "DIS", "DOS",
-  "DUR", "EAU", "ETE", "FER", "FEU", "FIL", "FIN", "FOI", "GAZ", "GEL",
-  "ILE", "JEU", "JUS", "LAC", "LIT", "LOI", "MAL", "MER", "MIS", "MOI",
-  "MOT", "MUR", "NEZ", "NID", "NOM", "NUL", "OEL", "OIE", "OUI", "PAS",
-  "PIE", "PIN", "PLI", "POT", "PRE", "RAT", "RIZ", "ROI", "RUE", "SAC",
-  "SEC", "SEL", "SOL", "SOU", "SUR", "TAS", "THE", "TIR", "TOI", "TON",
-  "TRI", "VIE", "VIN", "VOL", "VUE", "AILE", "AISE", "BAIN", "BIEN",
-  "BOIS", "CAGE", "CHAR", "CLEF", "COIN", "COTE", "DAME", "DENT", "DOUX",
-  "DRAP", "ELLE", "FACE", "FAIT", "FIER", "FILM", "GARE", "GOUT", "IDEE",
-  "LIEU", "LIEN", "LIRE", "LONG", "LUXE", "MAIN", "MISE", "MODE", "NEUF",
-  "NOIX", "PAIX", "PART", "PEAU", "PILE", "PONT", "RANG", "RIEN", "RIRE",
-  "ROBE", "SAIN", "SERA", "SOIR", "SORT", "TOIT", "TOUR", "TYPE", "VERS",
-  "VOIE", "VOIX",
-]);
-
-function isRealWord(word: string): boolean {
-  return COMMON_FRENCH_WORDS.has(word);
+export function canFormWord(grid: string[][], word: string): boolean {
+  return findWordPath(grid, word) !== null;
 }

@@ -1,89 +1,185 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import type { Tile } from "@/lib/game-engine";
+import { useRef, useCallback, type PointerEvent as ReactPointerEvent } from "react";
+import { motion } from "framer-motion";
+import { LETTER_SCORES, type Theme } from "@/lib/themes";
+import type { TilePos } from "@/lib/game-engine";
 
 interface TileGridProps {
-  tiles: Tile[];
-  cols: number;
-  rows: number;
-  onTileSelect: (id: string) => void;
+  grid: string[][];
+  selection: TilePos[];
+  theme: Theme;
+  onTileSelect: (row: number, col: number) => void;
+  onSwipeEnd: () => void;
 }
 
-export function TileGrid({ tiles, cols, rows, onTileSelect }: TileGridProps) {
-  const activeTiles = tiles.filter((t) => !t.matched);
+export function TileGrid({ grid, selection, theme, onTileSelect, onSwipeEnd }: TileGridProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const rows = grid.length;
+  const cols = grid[0].length;
+
+  const isSelected = (r: number, c: number) =>
+    selection.some((s) => s.row === r && s.col === c);
+
+  const selectionIndex = (r: number, c: number) =>
+    selection.findIndex((s) => s.row === r && s.col === c);
+
+  const getTileFromPoint = useCallback(
+    (clientX: number, clientY: number): { row: number; col: number } | null => {
+      const container = containerRef.current;
+      if (!container) return null;
+      const el = document.elementFromPoint(clientX, clientY);
+      if (!el) return null;
+      const tileEl = el.closest("[data-tile]");
+      if (!tileEl || !container.contains(tileEl)) return null;
+      const row = parseInt(tileEl.getAttribute("data-row") ?? "-1");
+      const col = parseInt(tileEl.getAttribute("data-col") ?? "-1");
+      if (row < 0 || col < 0) return null;
+      return { row, col };
+    },
+    []
+  );
+
+  const handlePointerDown = useCallback(
+    (e: ReactPointerEvent) => {
+      isDragging.current = true;
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+      const tile = getTileFromPoint(e.clientX, e.clientY);
+      if (tile) onTileSelect(tile.row, tile.col);
+    },
+    [getTileFromPoint, onTileSelect]
+  );
+
+  const handlePointerMove = useCallback(
+    (e: ReactPointerEvent) => {
+      if (!isDragging.current) return;
+      const tile = getTileFromPoint(e.clientX, e.clientY);
+      if (tile) onTileSelect(tile.row, tile.col);
+    },
+    [getTileFromPoint, onTileSelect]
+  );
+
+  const handlePointerUp = useCallback(() => {
+    if (isDragging.current) {
+      isDragging.current = false;
+      onSwipeEnd();
+    }
+  }, [onSwipeEnd]);
 
   return (
-    <div
-      className="grid gap-2 mx-auto w-full max-w-md px-2"
-      style={{
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
-        gridTemplateRows: `repeat(${rows}, 1fr)`,
-      }}
-    >
-      <AnimatePresence mode="popLayout">
-        {tiles.map((tile) => {
-          if (tile.matched) {
-            return (
-              <motion.div
-                key={tile.id}
-                initial={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                className="aspect-square"
-                style={{
-                  gridColumn: tile.col + 1,
-                  gridRow: tile.row + 1,
-                }}
-              />
-            );
-          }
+    <div className="flex flex-col items-center gap-3 w-full px-4">
+      {/* Tile container */}
+      <div
+        ref={containerRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        className="relative rounded-2xl p-3 sm:p-4 select-none touch-none"
+        style={{
+          background: "linear-gradient(145deg, #2a2d3a 0%, #1a1c28 50%, #15171f 100%)",
+          boxShadow: `
+            0 0 30px rgba(${theme.accentRgb}, 0.15),
+            0 8px 32px rgba(0,0,0,0.5),
+            inset 0 1px 0 rgba(255,255,255,0.08)
+          `,
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
+        {/* SVG lines connecting selected tiles */}
+        {selection.length > 1 && (
+          <svg
+            className="absolute inset-0 pointer-events-none z-10"
+            style={{ width: "100%", height: "100%" }}
+          >
+            {selection.slice(0, -1).map((from, i) => {
+              const to = selection[i + 1];
+              const tileSize = cols <= 3 ? 64 : cols <= 4 ? 56 : 48;
+              const gap = 8;
+              const pad = cols <= 3 ? 16 : 12;
+              const fromX = pad + from.col * (tileSize + gap) + tileSize / 2;
+              const fromY = pad + from.row * (tileSize + gap) + tileSize / 2;
+              const toX = pad + to.col * (tileSize + gap) + tileSize / 2;
+              const toY = pad + to.row * (tileSize + gap) + tileSize / 2;
+              return (
+                <line
+                  key={i}
+                  x1={fromX}
+                  y1={fromY}
+                  x2={toX}
+                  y2={toY}
+                  stroke={theme.accent}
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                  opacity={0.5}
+                />
+              );
+            })}
+          </svg>
+        )}
 
-          return (
-            <motion.button
-              key={tile.id}
-              layout
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{
-                scale: 1,
-                opacity: 1,
-                y: 0,
-              }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 400,
-                damping: 25,
-                layout: { type: "spring", stiffness: 300, damping: 30 },
-              }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => onTileSelect(tile.id)}
-              style={{
-                gridColumn: tile.col + 1,
-                gridRow: tile.row + 1,
-              }}
-              className={`
-                aspect-square rounded-xl text-lg sm:text-2xl font-bold
-                flex items-center justify-center
-                cursor-pointer select-none
-                transition-colors duration-150
-                shadow-md border-2 border-b-4
-                ${
-                  tile.selected
-                    ? "bg-violet-500 text-white border-violet-600 shadow-violet-300/50 shadow-lg"
-                    : "bg-white text-slate-800 border-slate-200 hover:border-violet-300 hover:bg-violet-50 active:border-violet-400"
-                }
-              `}
-            >
-              <span className="drop-shadow-sm">{tile.letter}</span>
-              {tile.selected && tile.selectionOrder >= 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-violet-700 text-white text-[10px] font-bold flex items-center justify-center">
-                  {tile.selectionOrder + 1}
-                </span>
-              )}
-            </motion.button>
-          );
-        })}
-      </AnimatePresence>
+        <div
+          className="grid relative z-20"
+          style={{
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            gap: "8px",
+          }}
+        >
+          {grid.map((row, r) =>
+            row.map((letter, c) => {
+              const selected = isSelected(r, c);
+              const idx = selectionIndex(r, c);
+              const score = LETTER_SCORES[letter] ?? 1;
+
+              return (
+                <motion.div
+                  key={`${r}-${c}`}
+                  data-tile="true"
+                  data-row={r}
+                  data-col={c}
+                  animate={selected ? { scale: 1.08 } : { scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="relative flex items-center justify-center cursor-pointer"
+                  style={{
+                    width: cols <= 3 ? 64 : cols <= 4 ? 56 : 48,
+                    height: cols <= 3 ? 64 : cols <= 4 ? 56 : 48,
+                    borderRadius: 10,
+                    background: selected
+                      ? theme.accent
+                      : "linear-gradient(145deg, #F5F0E8 0%, #E8E0D4 100%)",
+                    boxShadow: selected
+                      ? `0 0 16px rgba(${theme.accentRgb}, 0.6), 0 4px 8px rgba(0,0,0,0.3)`
+                      : "0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8)",
+                    border: selected
+                      ? `2px solid ${theme.accentLight}`
+                      : "1px solid rgba(200,190,175,0.6)",
+                  }}
+                >
+                  <span
+                    className="text-xl sm:text-2xl font-black"
+                    style={{
+                      color: selected ? "#FFFFFF" : "#2D2A26",
+                      textShadow: selected ? "0 1px 2px rgba(0,0,0,0.3)" : "none",
+                    }}
+                  >
+                    {letter}
+                  </span>
+                  <span
+                    className="absolute bottom-1 right-1.5 text-[9px] font-bold"
+                    style={{
+                      color: selected ? "rgba(255,255,255,0.7)" : "rgba(80,70,60,0.5)",
+                    }}
+                  >
+                    {score}
+                  </span>
+                </motion.div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }

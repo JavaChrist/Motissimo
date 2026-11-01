@@ -1,39 +1,33 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { Level } from "@/lib/levels";
 import {
   createGameState,
-  selectTile,
+  addToSelection,
   clearSelection,
   submitWord,
-  useHint,
+  useHintReveal,
   getCurrentWord,
   calculateStars,
-  getElapsedTime,
   type GameState,
 } from "@/lib/game-engine";
-import { loadProgress, saveProgress, type UserProgress } from "@/lib/firebase-db";
+import { saveProgress, type UserProgress } from "@/lib/firebase-db";
 
-export type FeedbackType = "correct" | "bonus" | "wrong" | null;
+export type FeedbackType = "correct" | "already" | "wrong" | null;
 
-export function useGame(uid: string | null) {
+export function useGame(uid: string | null, progress: UserProgress | null, setProgress: (p: UserProgress) => void) {
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [progress, setProgress] = useState<UserProgress | null>(null);
   const [feedback, setFeedback] = useState<FeedbackType>(null);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    loadProgress(uid).then(setProgress);
-  }, [uid]);
 
   const startLevel = useCallback((level: Level) => {
     setGameState(createGameState(level));
     setFeedback(null);
   }, []);
 
-  const handleTileSelect = useCallback((tileId: string) => {
-    setGameState((prev) => (prev ? selectTile(prev, tileId) : prev));
+  const handleTileSelect = useCallback((row: number, col: number) => {
+    setGameState((prev) => (prev ? addToSelection(prev, row, col) : prev));
   }, []);
 
   const handleClear = useCallback(() => {
@@ -44,7 +38,7 @@ export function useGame(uid: string | null) {
     setGameState((prev) => {
       if (!prev) return prev;
       const word = getCurrentWord(prev);
-      if (word.length < 3) return prev;
+      if (word.length < 2) return prev;
 
       const { state: newState, result } = submitWord(prev);
 
@@ -52,46 +46,38 @@ export function useGame(uid: string | null) {
       setFeedback(result);
       feedbackTimeout.current = setTimeout(() => setFeedback(null), 1200);
 
-      if (newState.isComplete) {
+      if (newState.isComplete && progress) {
         const stars = calculateStars(newState);
-        const elapsed = getElapsedTime(newState);
-        setProgress((p) => {
-          if (!p) return p;
-          const updated: UserProgress = {
-            ...p,
-            completedLevels: {
-              ...p.completedLevels,
-              [newState.levelId]: {
-                stars,
-                score: newState.score,
-                bestTime: elapsed,
-              },
-            },
-            totalScore: p.totalScore + newState.score,
-            currentLevel: Math.max(p.currentLevel, newState.levelId + 1),
-          };
-          saveProgress(uid, updated);
-          return updated;
-        });
+        const elapsed = Math.floor((Date.now() - newState.startTime) / 1000);
+        const updated: UserProgress = {
+          ...progress,
+          completedLevels: {
+            ...progress.completedLevels,
+            [newState.levelId]: { stars, score: newState.score, bestTime: elapsed },
+          },
+          totalScore: progress.totalScore + newState.score,
+          currentLevel: Math.max(progress.currentLevel, newState.levelId + 1),
+        };
+        saveProgress(uid, updated);
+        setProgress(updated);
       }
 
       return newState;
     });
-  }, [uid]);
+  }, [uid, progress, setProgress]);
 
-  const handleHint = useCallback((type: "reveal" | "shuffle") => {
+  const handleHint = useCallback(() => {
     setGameState((prev) => {
       if (!prev) return prev;
-      setProgress((p) => {
-        if (!p) return p;
-        if (p.hintsRemaining <= 0) return p;
-        const updated = { ...p, hintsRemaining: p.hintsRemaining - 1 };
+      if (progress && progress.hintsRemaining <= 0) return prev;
+      if (progress) {
+        const updated = { ...progress, hintsRemaining: progress.hintsRemaining - 1 };
         saveProgress(uid, updated);
-        return updated;
-      });
-      return useHint(prev, type);
+        setProgress(updated);
+      }
+      return useHintReveal(prev);
     });
-  }, [uid]);
+  }, [uid, progress, setProgress]);
 
   const exitGame = useCallback(() => {
     setGameState(null);
@@ -100,7 +86,6 @@ export function useGame(uid: string | null) {
 
   return {
     gameState,
-    progress,
     feedback,
     startLevel,
     handleTileSelect,
@@ -108,8 +93,7 @@ export function useGame(uid: string | null) {
     handleSubmit,
     handleHint,
     exitGame,
-    getCurrentWord: gameState ? getCurrentWord(gameState) : "",
+    currentWord: gameState ? getCurrentWord(gameState) : "",
     stars: gameState ? calculateStars(gameState) : 0,
-    elapsed: gameState ? getElapsedTime(gameState) : 0,
   };
 }

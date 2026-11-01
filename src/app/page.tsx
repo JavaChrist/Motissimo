@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { StartScreen } from "@/components/game/StartScreen";
 import { LevelSelect } from "@/components/game/LevelSelect";
@@ -8,14 +8,21 @@ import { GameScreen } from "@/components/game/GameScreen";
 import { useAuth } from "@/hooks/useAuth";
 import { useGame } from "@/hooks/useGame";
 import { getLevelById, LEVELS } from "@/lib/levels";
+import { loadProgress, type UserProgress } from "@/lib/firebase-db";
 
 type Screen = "start" | "levels" | "game";
 
 export default function Home() {
   const { user, signInWithGoogle, isConfigured } = useAuth();
+  const [progress, setProgress] = useState<UserProgress | null>(null);
+  const [screen, setScreen] = useState<Screen>("start");
+
+  useEffect(() => {
+    loadProgress(user?.uid ?? null).then(setProgress);
+  }, [user?.uid]);
+
   const {
     gameState,
-    progress,
     feedback,
     startLevel,
     handleTileSelect,
@@ -23,10 +30,8 @@ export default function Home() {
     handleSubmit,
     handleHint,
     exitGame,
-    getCurrentWord: currentWord,
-  } = useGame(user?.uid ?? null);
-
-  const [screen, setScreen] = useState<Screen>("start");
+    currentWord,
+  } = useGame(user?.uid ?? null, progress, setProgress);
 
   const handlePlay = useCallback(() => {
     const currentLevel = progress?.currentLevel ?? 1;
@@ -102,9 +107,9 @@ export default function Home() {
       {gameState && (
         <motion.div
           key="game"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.3 }}
         >
           <GameScreen
