@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Lock, Check } from "lucide-react";
+import { ArrowLeft, Check, Lock, RotateCcw, Star } from "lucide-react";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { LEVELS } from "@/lib/levels";
+import { gridsForSize, levelSize } from "@/lib/puzzle-bank";
 import { getTheme } from "@/lib/themes";
 import type { UserProgress } from "@/lib/firebase-db";
 
@@ -10,6 +12,7 @@ interface LevelSelectProps {
   progress: UserProgress | null;
   onSelect: (levelId: number) => void;
   onBack: () => void;
+  onResetScores: () => void;
 }
 
 const DIFFICULTY_LABELS = {
@@ -18,12 +21,16 @@ const DIFFICULTY_LABELS = {
   3: "Difficile",
 } as const;
 
-export function LevelSelect({ progress, onSelect, onBack }: LevelSelectProps) {
+export function LevelSelect({ progress, onSelect, onBack, onResetScores }: LevelSelectProps) {
+  const confirm = useConfirm();
   const currentLevel = progress?.currentLevel ?? 1;
+  const hasScores =
+    (progress?.totalScore ?? 0) > 0 ||
+    Object.values(progress?.completedLevels ?? {}).some((level) => level.stars > 0 || level.score > 0);
 
   return (
     <div
-      className="min-h-dvh relative overflow-hidden"
+      className="h-dvh flex flex-col relative overflow-hidden"
       style={{
         background: `
           linear-gradient(180deg,
@@ -35,18 +42,43 @@ export function LevelSelect({ progress, onSelect, onBack }: LevelSelectProps) {
       }}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-5 relative z-10">
+      <div
+        className="flex items-center gap-3 px-4 pb-3 relative z-10 shrink-0"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+      >
         <button
           onClick={onBack}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/15 transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-white/80" />
         </button>
-        <h1 className="text-xl font-black text-white">Niveaux</h1>
+        <h1 className="text-xl font-black text-white flex-1">Niveaux</h1>
+        <button
+          type="button"
+          disabled={!hasScores}
+          onClick={async () => {
+            const accepted = await confirm({
+              title: "Remettre les étoiles à zéro ?",
+              description:
+                "Les étoiles et les scores de tous les niveaux seront effacés. Les niveaux déjà ouverts restent accessibles.",
+              confirmLabel: "Reset",
+              cancelLabel: "Annuler",
+              variant: "destructive",
+            });
+            if (accepted) onResetScores();
+          }}
+          className="h-10 px-3 flex items-center gap-1.5 rounded-full bg-white/10 text-white/80 text-sm font-bold hover:bg-white/15 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reset
+        </button>
       </div>
 
       {/* Levels Grid */}
-      <div className="px-4 pb-8 relative z-10">
+      <div
+        className="px-4 relative z-10 flex-1 min-h-0 overflow-y-auto"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)" }}
+      >
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg mx-auto">
           {LEVELS.map((level, i) => {
             const isUnlocked = level.id <= currentLevel;
@@ -103,7 +135,7 @@ export function LevelSelect({ progress, onSelect, onBack }: LevelSelectProps) {
                   {level.title}
                 </h3>
                 <p className="text-[11px] text-white/30">
-                  {level.words.length} mots · {level.grid[0].length}×{level.grid.length}
+                  {level.grid[0].length}×{level.grid.length} · {gridsForSize(levelSize(level))} grilles
                 </p>
 
                 {completed && (

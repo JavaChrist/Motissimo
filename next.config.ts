@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/api/version",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
+      {
         source: "/manifest.json",
         headers: [
           { key: "Cache-Control", value: "public, max-age=3600" },

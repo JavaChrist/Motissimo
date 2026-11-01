@@ -4,15 +4,18 @@ import { useState, useCallback, useRef } from "react";
 import type { Level } from "@/lib/levels";
 import {
   createGameState,
+  beginSelection,
   addToSelection,
   clearSelection,
   submitWord,
   useHintReveal,
+  revealSolution,
   getCurrentWord,
   calculateStars,
   type GameState,
 } from "@/lib/game-engine";
 import { saveProgress, type UserProgress } from "@/lib/firebase-db";
+import { LEVELS } from "@/lib/levels";
 
 export type FeedbackType = "correct" | "already" | "wrong" | null;
 
@@ -21,9 +24,13 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
   const [feedback, setFeedback] = useState<FeedbackType>(null);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const startLevel = useCallback((level: Level) => {
-    setGameState(createGameState(level));
+  const startLevel = useCallback((level: Level, puzzleId = "") => {
+    setGameState(createGameState(level, puzzleId));
     setFeedback(null);
+  }, []);
+
+  const handleGestureStart = useCallback((row: number, col: number) => {
+    setGameState((prev) => (prev ? beginSelection(prev, row, col) : prev));
   }, []);
 
   const handleTileSelect = useCallback((row: number, col: number) => {
@@ -37,10 +44,8 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
   const handleSubmit = useCallback(() => {
     setGameState((prev) => {
       if (!prev) return prev;
-      const word = getCurrentWord(prev);
-      if (word.length < 2) return prev;
-
       const { state: newState, result } = submitWord(prev);
+      if (getCurrentWord(prev).length < 2) return newState;
 
       if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
       setFeedback(result);
@@ -49,14 +54,23 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
       if (newState.isComplete && progress) {
         const stars = calculateStars(newState);
         const elapsed = Math.floor((Date.now() - newState.startTime) / 1000);
+        const key = String(newState.levelId);
+        const previous = progress.completedLevels[key];
         const updated: UserProgress = {
           ...progress,
+          currentLevel: Math.max(
+            progress.currentLevel ?? 1,
+            Math.min(LEVELS.length, newState.levelId + 1)
+          ),
           completedLevels: {
             ...progress.completedLevels,
-            [newState.levelId]: { stars, score: newState.score, bestTime: elapsed },
+            [key]: {
+              stars: Math.max(previous?.stars ?? 0, stars),
+              score: Math.max(previous?.score ?? 0, newState.score),
+              bestTime: previous ? Math.min(previous.bestTime, elapsed) : elapsed,
+            },
           },
           totalScore: progress.totalScore + newState.score,
-          currentLevel: Math.max(progress.currentLevel, newState.levelId + 1),
         };
         saveProgress(uid, updated);
         setProgress(updated);
@@ -65,6 +79,13 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
       return newState;
     });
   }, [uid, progress, setProgress]);
+
+  const handleSolution = useCallback(() => {
+    if (!gameState || gameState.isComplete) return "";
+    const result = revealSolution(gameState);
+    setGameState(result.state);
+    return result.word;
+  }, [gameState]);
 
   const handleHint = useCallback(() => {
     setGameState((prev) => {
@@ -88,10 +109,12 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
     gameState,
     feedback,
     startLevel,
+    handleGestureStart,
     handleTileSelect,
     handleClear,
     handleSubmit,
     handleHint,
+    handleSolution,
     exitGame,
     currentWord: gameState ? getCurrentWord(gameState) : "",
     stars: gameState ? calculateStars(gameState) : 0,

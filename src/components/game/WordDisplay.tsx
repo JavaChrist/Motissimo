@@ -12,13 +12,13 @@ interface WordDisplayProps {
 export function WordDisplay({ targetWords, foundWords, theme }: WordDisplayProps) {
   const sorted = [...targetWords].sort((a, b) => a.length - b.length);
 
-  const useTwoColumns = sorted.length > 6 || sorted.some((w) => w.length > 6);
+  const useTwoColumns = sorted.length >= 5 || sorted.some((w) => w.length > 6);
   const midpoint = Math.ceil(sorted.length / 2);
   const leftCol = useTwoColumns ? sorted.slice(0, midpoint) : sorted;
   const rightCol = useTwoColumns ? sorted.slice(midpoint) : [];
 
   return (
-    <div className={`flex ${useTwoColumns ? "gap-4 sm:gap-6" : "flex-col items-center gap-1.5"} justify-center px-4`}>
+    <div className={`flex items-center justify-center px-4 ${useTwoColumns ? "gap-4 sm:gap-6" : "flex-col gap-1.5"}`}>
       <WordColumn words={leftCol} foundWords={foundWords} theme={theme} />
       {useTwoColumns && <WordColumn words={rightCol} foundWords={foundWords} theme={theme} />}
     </div>

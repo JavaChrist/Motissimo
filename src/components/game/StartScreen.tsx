@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play, Grid3X3, LogIn, User } from "lucide-react";
+import { LayoutGrid, LogIn, Play, User } from "lucide-react";
 
 interface StartScreenProps {
   onPlay: () => void;
@@ -20,8 +20,10 @@ export function StartScreen({
 }: StartScreenProps) {
   return (
     <div
-      className="min-h-dvh flex flex-col items-center justify-center p-6 relative overflow-hidden"
+      className="min-h-dvh flex flex-col items-center justify-center px-6 relative overflow-hidden"
       style={{
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)",
+        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
         background: `
           radial-gradient(ellipse 120% 40% at 50% 55%, rgba(255,255,255,0.12) 0%, transparent 100%),
           linear-gradient(180deg,
@@ -76,14 +78,15 @@ export function StartScreen({
         >
           {/* Mini tiles inside icon */}
           <div className="grid grid-cols-2 gap-1.5">
-            {["W", "O", "R", "D"].map((l, i) => (
+            {["M", "O", "T", "S"].map((l) => (
               <div
                 key={l}
                 className="w-10 h-10 rounded-lg flex items-center justify-center text-base font-black"
                 style={{
-                  background: "linear-gradient(145deg, #F5F0E8 0%, #E8E0D4 100%)",
+                  background: "linear-gradient(145deg, #FFF9F0 0%, #F3E6D4 46%, #E4D3BE 100%)",
                   color: "#2D2A26",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                  boxShadow:
+                    "0 3px 0 #C4B49E, 0 4px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -2px 0 rgba(120,90,50,0.16)",
                 }}
               >
                 {l}
@@ -93,7 +96,7 @@ export function StartScreen({
         </motion.div>
 
         <h1 className="text-4xl font-black text-white tracking-tight mb-2 drop-shadow-lg">
-          Word Tiles
+          Motissimo
         </h1>
         <p className="text-white/60 text-base">
           Trouve les mots cachés dans les tuiles
@@ -107,6 +110,7 @@ export function StartScreen({
         className="w-full max-w-xs space-y-3 z-10"
       >
         <button
+          type="button"
           onClick={onPlay}
           className="w-full h-14 text-lg font-bold text-white rounded-2xl flex items-center justify-center gap-3 transition-transform active:scale-95"
           style={{
@@ -119,15 +123,17 @@ export function StartScreen({
         </button>
 
         <button
+          type="button"
           onClick={onLevels}
-          className="w-full h-14 text-lg font-bold text-white/90 rounded-2xl flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/15 transition-all active:scale-95"
+          className="w-full h-12 text-base font-bold text-white rounded-2xl flex items-center justify-center gap-3 border border-white/25 bg-white/10 transition-transform active:scale-95"
         >
-          <Grid3X3 className="w-5 h-5" />
+          <LayoutGrid className="w-5 h-5" />
           Niveaux
         </button>
 
         {isConfigured && !userName && onSignIn && (
           <button
+            type="button"
             onClick={onSignIn}
             className="w-full h-12 text-sm font-medium text-white/50 rounded-2xl flex items-center justify-center gap-2 hover:text-white/70 transition-colors"
           >
@@ -150,7 +156,7 @@ export function StartScreen({
         transition={{ delay: 0.8 }}
         className="mt-auto pt-8 text-xs text-white/30 z-10"
       >
-        15 niveaux · Mots en français
+        15 niveaux · une nouvelle grille à chaque partie
       </motion.p>
     </div>
   );

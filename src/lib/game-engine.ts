@@ -21,10 +21,12 @@ export interface GameState {
   title: string;
   theme: string;
   levelId: number;
+  puzzleId: string;
   difficulty: 1 | 2 | 3;
+  revealedSolutions: string[];
 }
 
-export function createGameState(level: Level): GameState {
+export function createGameState(level: Level, puzzleId = ""): GameState {
   return {
     grid: level.grid,
     rows: level.grid.length,
@@ -39,7 +41,9 @@ export function createGameState(level: Level): GameState {
     title: level.title,
     theme: level.theme,
     levelId: level.id,
+    puzzleId,
     difficulty: level.difficulty,
+    revealedSolutions: [],
   };
 }
 
@@ -51,14 +55,22 @@ function isAlreadySelected(selection: TilePos[], pos: TilePos): boolean {
   return selection.some((s) => s.row === pos.row && s.col === pos.col);
 }
 
+export function beginSelection(state: GameState, row: number, col: number): GameState {
+  if (state.isComplete) return state;
+  if (row < 0 || col < 0 || row >= state.rows || col >= state.cols) return state;
+  return {
+    ...state,
+    selection: [{ row, col, letter: state.grid[row][col] }],
+  };
+}
+
 export function addToSelection(state: GameState, row: number, col: number): GameState {
+  if (state.isComplete) return state;
   const pos: TilePos = { row, col, letter: state.grid[row][col] };
 
   if (isAlreadySelected(state.selection, pos)) {
     const idx = state.selection.findIndex((s) => s.row === row && s.col === col);
-    if (idx === state.selection.length - 1) {
-      return { ...state, selection: state.selection.slice(0, -1) };
-    }
+    if (idx === state.selection.length - 1) return state;
     return { ...state, selection: state.selection.slice(0, idx + 1) };
   }
 
@@ -83,6 +95,10 @@ export function submitWord(state: GameState): {
   result: "correct" | "already" | "wrong";
 } {
   const word = getCurrentWord(state);
+
+  if (word.length < 2) {
+    return { state: clearSelection(state), result: "wrong" };
+  }
 
   if (state.foundWords.includes(word)) {
     return { state: clearSelection(state), result: "already" };
@@ -122,6 +138,27 @@ export function useHintReveal(state: GameState): GameState {
     ...state,
     selection: [path[0]],
     hintsUsed: state.hintsUsed + 1,
+  };
+}
+
+export function revealSolution(state: GameState): { state: GameState; word: string } {
+  const remaining = state.targetWords.filter((word) => !state.foundWords.includes(word));
+  if (remaining.length === 0) return { state, word: "" };
+
+  const shortest = remaining.reduce((a, b) => (a.length <= b.length ? a : b));
+  const path = findWordPath(state.grid, shortest);
+  const alreadyRevealed = state.revealedSolutions.includes(shortest);
+
+  return {
+    word: shortest,
+    state: {
+      ...state,
+      selection: path ?? [],
+      hintsUsed: alreadyRevealed ? state.hintsUsed : state.hintsUsed + 1,
+      revealedSolutions: alreadyRevealed
+        ? state.revealedSolutions
+        : [...state.revealedSolutions, shortest],
+    },
   };
 }
 
@@ -172,4 +209,64 @@ function findWordPath(grid: string[][], word: string): TilePos[] | null {
 
 export function canFormWord(grid: string[][], word: string): boolean {
   return findWordPath(grid, word) !== null;
+}
+
+const NEIGHBORS: ReadonlyArray<readonly [number, number]> = [
+  [-1, -1], [-1, 0], [-1, 1],
+  [0, -1], [0, 1],
+  [1, -1], [1, 0], [1, 1],
+];
+
+/** Nombre de mots restants qui passent par chaque case. */
+export function letterUseCounts(grid: string[][], words: string[]): number[][] {
+  const rows = grid.length;
+  const cols = grid[0]?.length ?? 0;
+  const counts = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
+
+  for (const word of words) {
+    for (const key of cellsUsedByWord(grid, word)) {
+      const comma = key.indexOf(",");
+      counts[Number(key.slice(0, comma))][Number(key.slice(comma + 1))] += 1;
+    }
+  }
+
+  return counts;
+}
+
+function cellsUsedByWord(grid: string[][], word: string): Set<string> {
+  const used = new Set<string>();
+  if (word.length === 0 || grid.length === 0) return used;
+
+  const rows = grid.length;
+  const cols = grid[0].length;
+
+  function dfs(row: number, col: number, index: number, visited: Set<string>): boolean {
+    if (index === word.length) return true;
+    let found = false;
+    for (const [dr, dc] of NEIGHBORS) {
+      const nr = row + dr;
+      const nc = col + dc;
+      if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+      const key = `${nr},${nc}`;
+      if (visited.has(key) || grid[nr][nc] !== word[index]) continue;
+      visited.add(key);
+      if (dfs(nr, nc, index + 1, visited)) {
+        used.add(key);
+        found = true;
+      }
+      visited.delete(key);
+    }
+    return found;
+  }
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      if (grid[row][col] !== word[0]) continue;
+      const start = `${row},${col}`;
+      const visited = new Set([start]);
+      if (word.length === 1 || dfs(row, col, 1, visited)) used.add(start);
+    }
+  }
+
+  return used;
 }

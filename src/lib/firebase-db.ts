@@ -12,6 +12,7 @@ export interface UserProgress {
   totalScore: number;
   hintsRemaining: number;
   currentLevel: number;
+  seenPuzzleIds?: string[];
 }
 
 const DEFAULT_PROGRESS: UserProgress = {

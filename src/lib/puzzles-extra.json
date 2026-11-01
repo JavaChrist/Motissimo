@@ -1,0 +1,58 @@
+[
+  {
+    "id": "4x2-mare",
+    "size": "4x2",
+    "title": "La mare",
+    "theme": "blue",
+    "grid": [["M", "A", "R", "E"], ["L", "O", "U", "P"]],
+    "words": ["MARE", "LOUP", "MAL", "ROUE", "PURE"]
+  },
+  {
+    "id": "4x2-sale",
+    "size": "4x2",
+    "title": "La salle",
+    "theme": "pink",
+    "grid": [["S", "A", "L", "E"], ["B", "O", "N", "S"]],
+    "words": ["SALE", "BONS", "SON", "SOL", "ANE", "LES", "BOL"]
+  },
+  {
+    "id": "3x3-bois",
+    "size": "3x3",
+    "title": "Le bois",
+    "theme": "green",
+    "grid": [["B", "O", "A"], ["L", "I", "S"], ["N", "E", "T"]],
+    "words": ["BOIS", "LIT", "BOL", "AILE", "NET", "LIE"]
+  },
+  {
+    "id": "3x3-roi",
+    "size": "3x3",
+    "title": "Le roi",
+    "theme": "purple",
+    "grid": [["R", "O", "I"], ["M", "A", "S"], ["L", "I", "T"]],
+    "words": ["ROI", "RAT", "LIT", "MAL", "MAI"]
+  },
+  {
+    "id": "3x3-dino",
+    "size": "3x3",
+    "title": "Le dino",
+    "theme": "orange",
+    "grid": [["D", "O", "S"], ["I", "N", "E"], ["L", "I", "T"]],
+    "words": ["DOS", "DINO", "LIT", "SOIN", "LIE"]
+  },
+  {
+    "id": "4x3-chat",
+    "size": "4x3",
+    "title": "Le chat",
+    "theme": "orange",
+    "grid": [["C", "H", "A", "T"], ["L", "I", "O", "E"], ["B", "R", "U", "S"]],
+    "words": ["CHAT", "ROUE", "RIO", "TOI", "ROI"]
+  },
+  {
+    "id": "4x3-pain",
+    "size": "4x3",
+    "title": "Le pain",
+    "theme": "pink",
+    "grid": [["P", "A", "I", "N"], ["L", "O", "T", "S"], ["B", "E", "U", "R"]],
+    "words": ["PAIN", "PALE", "TOUR", "OURS", "RUE", "BOL", "LOT"]
+  }
+]

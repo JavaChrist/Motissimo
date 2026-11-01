@@ -2,12 +2,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Star, Lightbulb, Trophy } from "lucide-react";
+import { X, Star, Lightbulb, Trophy, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { TileGrid } from "./TileGrid";
 import { WordDisplay } from "./WordDisplay";
 import { getTheme } from "@/lib/themes";
-import { calculateStars, getCurrentWord, type GameState } from "@/lib/game-engine";
+import { calculateStars, type GameState } from "@/lib/game-engine";
 import type { FeedbackType } from "@/hooks/useGame";
 import type { UserProgress } from "@/lib/firebase-db";
 
@@ -16,10 +23,12 @@ interface GameScreenProps {
   progress: UserProgress | null;
   feedback: FeedbackType;
   currentWord: string;
+  onGestureStart: (row: number, col: number) => void;
   onTileSelect: (row: number, col: number) => void;
   onClear: () => void;
   onSubmit: () => void;
   onHint: () => void;
+  onSolution: () => string;
   onExit: () => void;
   onNextLevel: () => void;
 }
@@ -29,17 +38,24 @@ export function GameScreen({
   progress,
   feedback,
   currentWord,
+  onGestureStart,
   onTileSelect,
   onClear,
   onSubmit,
   onHint,
+  onSolution,
   onExit,
   onNextLevel,
 }: GameScreenProps) {
   const [elapsed, setElapsed] = useState(0);
+  const [solution, setSolution] = useState<string | null>(null);
   const theme = getTheme(gameState.theme);
   const stars = calculateStars(gameState);
   const hintsLeft = progress?.hintsRemaining ?? 0;
+
+  useEffect(() => {
+    setSolution(null);
+  }, [gameState.puzzleId]);
 
   useEffect(() => {
     if (gameState.isComplete) return;
@@ -59,15 +75,27 @@ export function GameScreen({
     onSubmit();
   }, [onSubmit]);
 
+  const handleSolution = useCallback(() => {
+    const word = onSolution();
+    if (word) setSolution(word);
+  }, [onSolution]);
+
+  const wordsLeft = gameState.targetWords.length - gameState.foundWords.length;
+
   return (
     <div
-      className="min-h-dvh flex flex-col relative overflow-hidden"
+      className="h-dvh flex flex-col relative overflow-hidden"
       style={{ background: theme.background }}
     >
       {/* Close button */}
-      <div className="absolute top-4 right-4 z-30">
+      <div
+        className="absolute top-0 right-3 z-30"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+      >
         <button
+          type="button"
           onClick={onExit}
+          aria-label="Quitter"
           className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white/80 hover:bg-black/50 transition-colors"
         >
           <X className="w-5 h-5" />
@@ -75,7 +103,10 @@ export function GameScreen({
       </div>
 
       {/* Top banner */}
-      <div className="flex justify-center pt-6 pb-4 px-6 z-10">
+      <div
+        className="flex justify-center px-14 pb-2 z-10 shrink-0"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+      >
         <div
           className="relative px-8 py-3 rounded-2xl max-w-xs w-full text-center"
           style={{
@@ -94,7 +125,7 @@ export function GameScreen({
       </div>
 
       {/* Stats row */}
-      <div className="flex items-center justify-center gap-6 pb-2 z-10">
+      <div className="flex items-center justify-center gap-6 pb-1 z-10 shrink-0">
         <div className="flex items-center gap-1.5 text-white/80 text-xs font-medium">
           <Trophy className="w-3.5 h-3.5" />
           <span>{gameState.score}</span>
@@ -108,7 +139,7 @@ export function GameScreen({
       </div>
 
       {/* Word Display */}
-      <div className="flex-1 flex items-center justify-center z-10 py-4">
+      <div className="flex-1 min-h-0 flex items-center justify-center z-10 py-2">
         <WordDisplay
           targetWords={gameState.targetWords}
           foundWords={gameState.foundWords}
@@ -117,7 +148,7 @@ export function GameScreen({
       </div>
 
       {/* Current word badge */}
-      <div className="flex justify-center z-10 pb-2" style={{ minHeight: 40 }}>
+      <div className="flex justify-center z-10 shrink-0" style={{ minHeight: 36 }}>
         <AnimatePresence mode="wait">
           {currentWord.length > 0 && (
             <motion.div
@@ -157,28 +188,46 @@ export function GameScreen({
       </div>
 
       {/* Tile Grid */}
-      <div className="z-10 pb-4">
+      <div className="z-10 shrink-0 pb-2">
         <TileGrid
           grid={gameState.grid}
           selection={gameState.selection}
+          foundWords={gameState.foundWords}
+          targetWords={gameState.targetWords}
           theme={theme}
+          onGestureStart={onGestureStart}
           onTileSelect={onTileSelect}
           onSwipeEnd={handleSwipeEnd}
         />
       </div>
 
       {/* Bottom actions */}
-      <div className="flex items-center justify-center gap-4 pb-6 pb-safe z-10">
+      <div
+        className="flex items-center justify-center gap-4 z-10 shrink-0"
+        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      >
         <button
+          type="button"
           onClick={onHint}
           disabled={hintsLeft <= 0}
+          aria-label="Indice"
           className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white/80 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors disabled:opacity-30"
         >
           <Lightbulb className="w-4 h-4" />
           <span>{hintsLeft}</span>
         </button>
+        <button
+          type="button"
+          onClick={handleSolution}
+          disabled={wordsLeft === 0}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-colors disabled:opacity-30"
+        >
+          <KeyRound className="w-4 h-4" />
+          Solution
+        </button>
         {currentWord.length >= 2 && (
           <button
+            type="button"
             onClick={onSubmit}
             className="px-6 py-2 rounded-full text-sm font-bold text-white transition-colors"
             style={{
@@ -191,6 +240,7 @@ export function GameScreen({
         )}
         {currentWord.length > 0 && (
           <button
+            type="button"
             onClick={onClear}
             className="px-4 py-2 rounded-full text-xs font-bold text-white/60 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
           >
@@ -198,6 +248,21 @@ export function GameScreen({
           </button>
         )}
       </div>
+
+      <Dialog open={solution !== null} onOpenChange={(open) => !open && setSolution(null)}>
+        <DialogContent className="text-center sm:max-w-xs" showCloseButton={false}>
+          <DialogHeader className="items-center">
+            <DialogTitle>Solution</DialogTitle>
+            <DialogDescription>
+              Les tuiles éclairées montrent le chemin, dans l&apos;ordre.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-3xl font-black tracking-[0.25em]">{solution}</p>
+          <Button type="button" className="w-full" onClick={() => setSolution(null)}>
+            Compris
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Level Complete Overlay */}
       <AnimatePresence>
@@ -279,7 +344,7 @@ export function GameScreen({
                   className="flex-1 rounded-xl border-2 font-bold"
                   style={{ borderColor: "rgba(139,125,107,0.3)", color: "#3D3227" }}
                 >
-                  Niveaux
+                  Accueil
                 </Button>
                 <Button
                   onClick={onNextLevel}

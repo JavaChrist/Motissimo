@@ -2,13 +2,21 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { StartScreen } from "@/components/game/StartScreen";
-import { LevelSelect } from "@/components/game/LevelSelect";
 import { GameScreen } from "@/components/game/GameScreen";
+import { LevelSelect } from "@/components/game/LevelSelect";
+import { StartScreen } from "@/components/game/StartScreen";
 import { useAuth } from "@/hooks/useAuth";
 import { useGame } from "@/hooks/useGame";
+import { loadProgress, saveProgress, type UserProgress } from "@/lib/firebase-db";
 import { getLevelById, LEVELS } from "@/lib/levels";
-import { loadProgress, type UserProgress } from "@/lib/firebase-db";
+import {
+  applyPuzzle,
+  LOCAL_PUZZLES,
+  loadPuzzleBank,
+  pickPuzzle,
+  puzzlesForLevel,
+  type Puzzle,
+} from "@/lib/puzzle-bank";
 
 type Screen = "start" | "levels" | "game";
 
@@ -16,56 +24,78 @@ export default function Home() {
   const { user, signInWithGoogle, isConfigured } = useAuth();
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [screen, setScreen] = useState<Screen>("start");
+  const [bank, setBank] = useState<Puzzle[]>(LOCAL_PUZZLES);
+
+  const uid = user?.uid ?? "";
 
   useEffect(() => {
-    loadProgress(user?.uid ?? null).then(setProgress);
-  }, [user?.uid]);
+    loadProgress(uid || null).then(setProgress);
+  }, [uid]);
+
+  useEffect(() => {
+    if (isConfigured && !uid) return;
+    let cancelled = false;
+    loadPuzzleBank().then((puzzles) => {
+      if (!cancelled) setBank(puzzles);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isConfigured, uid]);
 
   const {
     gameState,
     feedback,
     startLevel,
+    handleGestureStart,
     handleTileSelect,
     handleClear,
     handleSubmit,
     handleHint,
+    handleSolution,
     exitGame,
     currentWord,
   } = useGame(user?.uid ?? null, progress, setProgress);
 
-  const handlePlay = useCallback(() => {
-    const currentLevel = progress?.currentLevel ?? 1;
-    const level = getLevelById(currentLevel) ?? LEVELS[0];
-    startLevel(level);
-    setScreen("game");
-  }, [progress, startLevel]);
-
-  const handleSelectLevel = useCallback(
-    (levelId: number) => {
-      const level = getLevelById(levelId);
-      if (level) {
-        startLevel(level);
-        setScreen("game");
-      }
+  const launchLevel = useCallback(
+    (levelId: number, avoidId?: string) => {
+      const level = getLevelById(levelId) ?? LEVELS[0];
+      const puzzle = pickPuzzle(
+        puzzlesForLevel(bank, level),
+        progress?.seenPuzzleIds ?? [],
+        avoidId
+      );
+      const seen = progress?.seenPuzzleIds ?? [];
+      const nextSeen = seen.includes(puzzle.id) ? seen : [...seen, puzzle.id];
+      const base: UserProgress = progress ?? {
+        completedLevels: {},
+        totalScore: 0,
+        hintsRemaining: 5,
+        currentLevel: 1,
+        seenPuzzleIds: [],
+      };
+      const updated: UserProgress = { ...base, seenPuzzleIds: nextSeen };
+      setProgress(updated);
+      saveProgress(user?.uid ?? null, updated);
+      startLevel(applyPuzzle(level, puzzle), puzzle.id);
+      setScreen("game");
     },
-    [startLevel]
+    [bank, progress, startLevel, user?.uid]
   );
 
+  const handlePlay = useCallback(() => {
+    launchLevel(progress?.currentLevel ?? 1);
+  }, [launchLevel, progress?.currentLevel]);
+
   const handleNextLevel = useCallback(() => {
-    if (!gameState) return;
-    const nextId = gameState.levelId + 1;
-    const next = getLevelById(nextId);
-    if (next) {
-      startLevel(next);
-    } else {
-      setScreen("levels");
-      exitGame();
-    }
-  }, [gameState, startLevel, exitGame]);
+    const levelId = gameState?.levelId ?? 1;
+    const next = levelId < LEVELS.length ? levelId + 1 : levelId;
+    launchLevel(next, next === levelId ? gameState?.puzzleId : undefined);
+  }, [gameState?.levelId, gameState?.puzzleId, launchLevel]);
 
   const handleExit = useCallback(() => {
     exitGame();
-    setScreen("levels");
+    setScreen("start");
   }, [exitGame]);
 
   return (
@@ -91,15 +121,31 @@ export default function Home() {
       {screen === "levels" && !gameState && (
         <motion.div
           key="levels"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <LevelSelect
             progress={progress}
-            onSelect={handleSelectLevel}
+            onSelect={launchLevel}
             onBack={() => setScreen("start")}
+            onResetScores={() => {
+              const base: UserProgress = progress ?? {
+                completedLevels: {},
+                totalScore: 0,
+                hintsRemaining: 5,
+                currentLevel: 1,
+                seenPuzzleIds: [],
+              };
+              const updated: UserProgress = {
+                ...base,
+                completedLevels: {},
+                totalScore: 0,
+              };
+              setProgress(updated);
+              saveProgress(user?.uid ?? null, updated);
+            }}
           />
         </motion.div>
       )}
@@ -117,10 +163,12 @@ export default function Home() {
             progress={progress}
             feedback={feedback}
             currentWord={currentWord}
+            onGestureStart={handleGestureStart}
             onTileSelect={handleTileSelect}
             onClear={handleClear}
             onSubmit={handleSubmit}
             onHint={handleHint}
+            onSolution={handleSolution}
             onExit={handleExit}
             onNextLevel={handleNextLevel}
           />
