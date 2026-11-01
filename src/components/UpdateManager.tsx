@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,15 +23,32 @@ function newerVersion(pageVersion: string, remoteVersion: string | null): boolea
   return remoteVersion !== pageVersion;
 }
 
-export function UpdateManager({ pageVersion }: { pageVersion: string }) {
-  const [open, setOpen] = useState(false);
+function subscribePreview() {
+  return () => {};
+}
 
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
-    if (new URLSearchParams(window.location.search).has("apercu-maj")) setOpen(true);
-  }, []);
+function previewRequested() {
+  return (
+    process.env.NODE_ENV === "development" &&
+    new URLSearchParams(window.location.search).has("apercu-maj")
+  );
+}
+
+function shouldPrompt(pageVersion: string, remoteVersion: string) {
+  if (!newerVersion(pageVersion, remoteVersion)) return false;
+  if (sessionStorage.getItem(SESSION_KEY) === "1") return false;
+  if (remoteVersion === localStorage.getItem(ACK_KEY)) return false;
+  if (document.querySelector("[role='dialog']")) return false;
+  const snooze = Number(localStorage.getItem(SNOOZE_KEY) || 0) || null;
+  return snooze === null || Date.now() >= snooze;
+}
+
+export function UpdateManager({ pageVersion }: { pageVersion: string }) {
+  const preview = useSyncExternalStore(subscribePreview, previewRequested, () => false);
+  const [dismissed, setDismissed] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const open = !dismissed && (preview || updateOpen);
   const [remote, setRemote] = useState<string | null>(null);
-  const [checkFailed, setCheckFailed] = useState(false);
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
   const [busy, setBusy] = useState(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
@@ -55,15 +72,12 @@ export function UpdateManager({ pageVersion }: { pageVersion: string }) {
         const payload = (await response.json()) as { version?: string };
         if (cancelled) return;
         setRemote(payload.version ?? null);
-        setCheckFailed(false);
+        if (payload.version && shouldPrompt(pageVersion, payload.version)) setUpdateOpen(true);
         if (payload.version && payload.version !== pageVersion) {
           await registrationRef.current?.update();
         }
       } catch {
-        if (!cancelled) {
-          setRemote(null);
-          setCheckFailed(true);
-        }
+        if (!cancelled) setRemote(null);
       } finally {
         inFlight = false;
       }
@@ -132,21 +146,11 @@ export function UpdateManager({ pageVersion }: { pageVersion: string }) {
     return () => navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
   }, []);
 
-  useEffect(() => {
-    const snooze = Number(localStorage.getItem(SNOOZE_KEY) || 0) || null;
-    const offer =
-      !checkFailed &&
-      !document.querySelector("[role='dialog']") &&
-      newerVersion(pageVersion, remote) &&
-      remote !== localStorage.getItem(ACK_KEY) &&
-      (snooze === null || Date.now() >= snooze);
-    if (offer && sessionStorage.getItem(SESSION_KEY) !== "1") setOpen(true);
-  }, [pageVersion, remote, checkFailed]);
-
   function later() {
     localStorage.setItem(SNOOZE_KEY, String(Date.now() + LATER_MS));
     sessionStorage.setItem(SESSION_KEY, "1");
-    setOpen(false);
+    setDismissed(true);
+    setUpdateOpen(false);
   }
 
   function updateNow() {

@@ -11,14 +11,12 @@ import {
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 
 export function useAuth() {
+  const configured = isFirebaseConfigured();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(configured);
 
   useEffect(() => {
-    if (!isFirebaseConfigured()) {
-      setLoading(false);
-      return;
-    }
+    if (!configured) return;
 
     const auth = getFirebaseAuth();
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -29,7 +27,7 @@ export function useAuth() {
     signInAnonymously(auth).catch(() => setLoading(false));
 
     return unsub;
-  }, []);
+  }, [configured]);
 
   const signInWithGoogle = useCallback(async () => {
     if (!isFirebaseConfigured()) return;

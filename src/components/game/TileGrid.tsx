@@ -36,8 +36,6 @@ export function TileGrid({
     () => letterUseCounts(grid, targetWords.filter((word) => !foundWords.includes(word))),
     [grid, foundWords, targetWords]
   );
-  const useCountsRef = useRef(useCounts);
-  useCountsRef.current = useCounts;
 
   const isSelected = (r: number, c: number) =>
     selection.some((s) => s.row === r && s.col === c);
@@ -63,7 +61,7 @@ export function TileGrid({
 
   const visit = useCallback(
     (row: number, col: number) => {
-      const active = (r: number, c: number) => (useCountsRef.current[r]?.[c] ?? 0) > 0;
+      const active = (r: number, c: number) => (useCounts[r]?.[c] ?? 0) > 0;
       const last = lastTile.current;
       if (!last) {
         if (!active(row, col)) return;
@@ -102,7 +100,7 @@ export function TileGrid({
         lastTile.current = { row, col };
       }
     },
-    [onTileSelect]
+    [onTileSelect, useCounts]
   );
 
   const trace = useCallback(

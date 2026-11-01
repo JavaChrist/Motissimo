@@ -67,10 +67,11 @@ export function StartScreen({
       >
         {/* App icon */}
         <motion.div
-          animate={{ rotate: [0, 2, -2, 0] }}
-          transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-          className="inline-flex items-center justify-center w-28 h-28 rounded-3xl shadow-2xl mb-6 relative"
+          animate={{ x: [0, 22, 0, -22, 0], rotate: [0, 8, 0, -8, 0] }}
+          transition={{ repeat: Infinity, duration: 2.6, ease: "easeInOut" }}
+          className="mx-auto flex items-center justify-center w-28 h-28 rounded-3xl shadow-2xl mb-6 relative"
           style={{
+            transformOrigin: "center center",
             background: "linear-gradient(145deg, #2a2d3a 0%, #1a1c28 50%, #15171f 100%)",
             boxShadow: "0 0 40px rgba(249,115,22,0.2), 0 8px 32px rgba(0,0,0,0.4)",
             border: "1px solid rgba(255,255,255,0.08)",

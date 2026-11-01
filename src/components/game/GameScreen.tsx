@@ -48,14 +48,11 @@ export function GameScreen({
   onNextLevel,
 }: GameScreenProps) {
   const [elapsed, setElapsed] = useState(0);
-  const [solution, setSolution] = useState<string | null>(null);
+  const [shownSolution, setShownSolution] = useState<{ puzzleId: string; word: string } | null>(null);
+  const solution = shownSolution?.puzzleId === gameState.puzzleId ? shownSolution.word : null;
   const theme = getTheme(gameState.theme);
   const stars = calculateStars(gameState);
   const hintsLeft = progress?.hintsRemaining ?? 0;
-
-  useEffect(() => {
-    setSolution(null);
-  }, [gameState.puzzleId]);
 
   useEffect(() => {
     if (gameState.isComplete) return;
@@ -77,8 +74,8 @@ export function GameScreen({
 
   const handleSolution = useCallback(() => {
     const word = onSolution();
-    if (word) setSolution(word);
-  }, [onSolution]);
+    if (word) setShownSolution({ puzzleId: gameState.puzzleId, word });
+  }, [gameState.puzzleId, onSolution]);
 
   const wordsLeft = gameState.targetWords.length - gameState.foundWords.length;
 
@@ -249,7 +246,7 @@ export function GameScreen({
         )}
       </div>
 
-      <Dialog open={solution !== null} onOpenChange={(open) => !open && setSolution(null)}>
+      <Dialog open={solution !== null} onOpenChange={(open) => !open && setShownSolution(null)}>
         <DialogContent className="text-center sm:max-w-xs" showCloseButton={false}>
           <DialogHeader className="items-center">
             <DialogTitle>Solution</DialogTitle>
@@ -258,7 +255,7 @@ export function GameScreen({
             </DialogDescription>
           </DialogHeader>
           <p className="text-3xl font-black tracking-[0.25em]">{solution}</p>
-          <Button type="button" className="w-full" onClick={() => setSolution(null)}>
+          <Button type="button" className="w-full" onClick={() => setShownSolution(null)}>
             Compris
           </Button>
         </DialogContent>

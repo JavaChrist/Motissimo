@@ -126,7 +126,7 @@ export function submitWord(state: GameState): {
   };
 }
 
-export function useHintReveal(state: GameState): GameState {
+export function revealHint(state: GameState): GameState {
   const remaining = state.targetWords.filter((w) => !state.foundWords.includes(w));
   if (remaining.length === 0) return state;
 
@@ -162,7 +162,7 @@ export function revealSolution(state: GameState): { state: GameState; word: stri
   };
 }
 
-export function useHintShuffle(state: GameState): GameState {
+export function shuffleHint(state: GameState): GameState {
   return { ...state, hintsUsed: state.hintsUsed + 1 };
 }
 

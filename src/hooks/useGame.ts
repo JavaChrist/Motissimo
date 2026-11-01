@@ -8,7 +8,7 @@ import {
   addToSelection,
   clearSelection,
   submitWord,
-  useHintReveal,
+  revealHint,
   revealSolution,
   getCurrentWord,
   calculateStars,
@@ -96,7 +96,7 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
         saveProgress(uid, updated);
         setProgress(updated);
       }
-      return useHintReveal(prev);
+      return revealHint(prev);
     });
   }, [uid, progress, setProgress]);
 
