@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -168,20 +169,75 @@ export function UpdateManager({ pageVersion }: { pageVersion: string }) {
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && later()}>
-      <DialogContent className="text-center sm:max-w-xs" showCloseButton={false}>
-        <DialogHeader className="items-center">
-          <DialogTitle>Une nouvelle version est disponible</DialogTitle>
-          <DialogDescription>
-            Tu peux l&apos;appliquer maintenant. La partie en cours reprendra au début.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" className="flex-1" onClick={later} disabled={busy}>
-            Plus tard
-          </Button>
-          <Button type="button" className="flex-1" onClick={updateNow} disabled={busy}>
-            Mettre à jour
-          </Button>
+      <DialogContent
+        className="gap-0 overflow-hidden border-0 p-0 text-center sm:max-w-xs"
+        showCloseButton={false}
+        style={{
+          background: "linear-gradient(180deg, #FFF9F0 0%, #F4E4CC 100%)",
+          borderRadius: 28,
+          boxShadow: "0 24px 60px rgba(8, 92, 110, 0.45), 0 0 0 3px rgba(249, 115, 22, 0.35)",
+        }}
+      >
+        <div
+          aria-hidden
+          className="h-2 w-full"
+          style={{ background: "linear-gradient(90deg, #0891B2 0%, #67E8F9 42%, #F97316 100%)" }}
+        />
+        <div className="px-5 pt-5 pb-5">
+          <div
+            className="mx-auto mb-4 grid w-fit grid-cols-2 gap-1 rounded-2xl p-2"
+            style={{
+              background: "linear-gradient(145deg, #2a2d3a 0%, #1a1c28 100%)",
+              boxShadow: "0 8px 20px rgba(14, 116, 144, 0.28)",
+            }}
+          >
+            {["M", "O", "T", "S"].map((letter) => (
+              <div
+                key={letter}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black"
+                style={{
+                  background: "linear-gradient(145deg, #FFF9F0 0%, #F3E6D4 46%, #E4D3BE 100%)",
+                  color: "#2D2A26",
+                  boxShadow: "0 2px 0 #C4B49E, inset 0 1px 0 rgba(255,255,255,0.95)",
+                }}
+              >
+                {letter}
+              </div>
+            ))}
+          </div>
+          <DialogHeader className="items-center">
+            <DialogTitle className="flex items-center justify-center gap-1.5 text-lg font-black" style={{ color: "#3D3227" }}>
+              <Sparkles className="size-4 text-orange-500" />
+              Une nouvelle version
+            </DialogTitle>
+            <DialogDescription className="text-sm" style={{ color: "#8B7D6B" }}>
+              Tu peux l&apos;appliquer maintenant. La partie en cours reprendra au début.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-5 flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 flex-1 rounded-xl border-2 font-bold"
+              style={{ borderColor: "rgba(139,125,107,0.35)", color: "#3D3227", background: "rgba(255,255,255,0.55)" }}
+              onClick={later}
+              disabled={busy}
+            >
+              Plus tard
+            </Button>
+            <Button
+              type="button"
+              className="h-11 flex-1 rounded-xl font-bold text-white"
+              style={{
+                background: "linear-gradient(135deg, #F97316, #EA580C)",
+                boxShadow: "0 6px 16px rgba(249,115,22,0.35)",
+              }}
+              onClick={updateNow}
+              disabled={busy}
+            >
+              Mettre à jour
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

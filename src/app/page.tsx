@@ -19,6 +19,7 @@ import {
   type Puzzle,
 } from "@/lib/puzzle-bank";
 import { puzzleForDay, todayKey } from "@/lib/daily";
+import { primeSpeech } from "@/lib/speech";
 
 type Screen = "start" | "levels" | "game";
 
@@ -62,6 +63,7 @@ export default function Home() {
   const launchLevel = useCallback(
     (levelId: number, avoidId?: string) => {
       const level = getLevelById(levelId) ?? LEVELS[0];
+      if (progress?.childMode) primeSpeech();
       const puzzle = pickPuzzle(
         puzzlesForLevel(bank, level, progress?.childMode === true),
         progress?.seenPuzzleIds ?? [],
@@ -98,6 +100,7 @@ export default function Home() {
   const handleDaily = useCallback(() => {
     const puzzle = puzzleForDay(bank, todayKey(), progress?.childMode === true);
     if (!puzzle) return;
+    if (progress?.childMode) primeSpeech();
     const level = LEVELS.find((item) => levelSize(item) === puzzle.size) ?? LEVELS[0];
     startLevel(applyPuzzle(level, puzzle), puzzle.id, "daily");
     setScreen("game");
@@ -140,6 +143,7 @@ export default function Home() {
             onDaily={handleDaily}
             onToggleChild={() => {
               const next = progress?.childMode !== true;
+              if (next) primeSpeech();
               savePatch({ childMode: next, showCounts: next });
             }}
             onToggleCounts={() => savePatch({ showCounts: !countsAreVisible(progress) })}

@@ -54,6 +54,7 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
   }, []);
 
   const handleSubmit = useCallback(() => {
+    let toSpeak = "";
     setGameState((prev) => {
       if (!prev) return prev;
       const word = getCurrentWord(prev);
@@ -75,7 +76,7 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
             buzz(35);
           }
         }
-        if (progress?.childMode && (result === "correct" || result === "bonus")) speakWord(word);
+        if (progress?.childMode && (result === "correct" || result === "bonus")) toSpeak = word;
       }
 
       if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
@@ -124,6 +125,7 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
 
       return newState;
     });
+    if (toSpeak) speakWord(toSpeak);
   }, [uid, progress, setProgress]);
 
   const handleSolution = useCallback(() => {
