@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Star, Lightbulb, Trophy, KeyRound } from "lucide-react";
+import { X, Star, Lightbulb, Trophy, KeyRound, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +31,10 @@ interface GameScreenProps {
   onSolution: () => string;
   onExit: () => void;
   onNextLevel: () => void;
+  showCounts: boolean;
+  soundOn: boolean;
+  onToggleSound: () => void;
+  dailyStreak: number;
 }
 
 export function GameScreen({
@@ -46,6 +50,10 @@ export function GameScreen({
   onSolution,
   onExit,
   onNextLevel,
+  showCounts,
+  soundOn,
+  onToggleSound,
+  dailyStreak,
 }: GameScreenProps) {
   const [elapsed, setElapsed] = useState(0);
   const [shownSolution, setShownSolution] = useState<{ puzzleId: string; word: string } | null>(null);
@@ -84,7 +92,20 @@ export function GameScreen({
       className="h-dvh flex flex-col relative overflow-hidden"
       style={{ background: theme.background }}
     >
-      {/* Close button */}
+      <div
+        className="absolute top-0 left-3 z-30"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+      >
+        <button
+          type="button"
+          onClick={onToggleSound}
+          aria-label={soundOn ? "Couper le son" : "Activer le son"}
+          aria-pressed={soundOn}
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white/80 hover:bg-black/50 transition-colors"
+        >
+          {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+        </button>
+      </div>
       <div
         className="absolute top-0 right-3 z-30"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
@@ -142,6 +163,11 @@ export function GameScreen({
           foundWords={gameState.foundWords}
           theme={theme}
         />
+        {gameState.foundBonus.length > 0 && (
+          <p className="mt-2 text-center text-[11px] font-bold tracking-wide text-white/75">
+            Bonus · {gameState.foundBonus.join(" · ")}
+          </p>
+        )}
       </div>
 
       {/* Current word badge */}
@@ -171,12 +197,15 @@ export function GameScreen({
               className={`px-5 py-1.5 rounded-full font-bold text-sm ${
                 feedback === "correct"
                   ? "bg-emerald-500 text-white"
-                  : feedback === "already"
-                    ? "bg-amber-500 text-white"
-                    : "bg-red-500/80 text-white"
+                  : feedback === "bonus"
+                    ? "bg-sky-500 text-white"
+                    : feedback === "already"
+                      ? "bg-amber-500 text-white"
+                      : "bg-red-500/80 text-white"
               }`}
             >
               {feedback === "correct" && "Bravo !"}
+              {feedback === "bonus" && "Bonus !"}
               {feedback === "already" && "Déjà trouvé"}
               {feedback === "wrong" && "Essaie encore"}
             </motion.div>
@@ -192,6 +221,7 @@ export function GameScreen({
           foundWords={gameState.foundWords}
           targetWords={gameState.targetWords}
           theme={theme}
+          showCounts={showCounts}
           onGestureStart={onGestureStart}
           onTileSelect={onTileSelect}
           onSwipeEnd={handleSwipeEnd}
@@ -294,10 +324,10 @@ export function GameScreen({
               </motion.div>
 
               <h2 className="text-2xl font-black mb-1" style={{ color: "#3D3227" }}>
-                Niveau terminé !
+                {gameState.mode === "daily" ? "Défi réussi !" : "Niveau terminé !"}
               </h2>
               <p className="text-sm mb-4" style={{ color: "#8B7D6B" }}>
-                {gameState.title}
+                {gameState.mode === "daily" ? `Série de ${dailyStreak} jour${dailyStreak > 1 ? "s" : ""}` : gameState.title}
               </p>
 
               <div className="flex justify-center gap-1 mb-4">
@@ -338,18 +368,20 @@ export function GameScreen({
                 <Button
                   variant="outline"
                   onClick={onExit}
-                  className="flex-1 rounded-xl border-2 font-bold"
+                  className={`${gameState.mode === "daily" ? "w-full" : "flex-1"} rounded-xl border-2 font-bold`}
                   style={{ borderColor: "rgba(139,125,107,0.3)", color: "#3D3227" }}
                 >
                   Accueil
                 </Button>
-                <Button
-                  onClick={onNextLevel}
-                  className="flex-1 rounded-xl font-bold text-white"
-                  style={{ background: theme.accent }}
-                >
-                  Suivant
-                </Button>
+                {gameState.mode !== "daily" && (
+                  <Button
+                    onClick={onNextLevel}
+                    className="flex-1 rounded-xl font-bold text-white"
+                    style={{ background: theme.accent }}
+                  >
+                    Suivant
+                  </Button>
+                )}
               </div>
             </motion.div>
           </motion.div>

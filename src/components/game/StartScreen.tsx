@@ -1,11 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LayoutGrid, LogIn, Play, User } from "lucide-react";
+import { Baby, CalendarDays, Hash, LayoutGrid, LogIn, Play, User, Volume2, VolumeX } from "lucide-react";
 
 interface StartScreenProps {
   onPlay: () => void;
   onLevels: () => void;
+  onDaily: () => void;
+  onToggleChild: () => void;
+  onToggleCounts: () => void;
+  onToggleSound: () => void;
+  childMode: boolean;
+  showCounts: boolean;
+  soundOn: boolean;
+  dailyDone: boolean;
+  dailyStreak: number;
   userName?: string | null;
   onSignIn?: () => void;
   isConfigured: boolean;
@@ -14,13 +23,22 @@ interface StartScreenProps {
 export function StartScreen({
   onPlay,
   onLevels,
+  onDaily,
+  onToggleChild,
+  onToggleCounts,
+  onToggleSound,
+  childMode,
+  showCounts,
+  soundOn,
+  dailyDone,
+  dailyStreak,
   userName,
   onSignIn,
   isConfigured,
 }: StartScreenProps) {
   return (
     <div
-      className="min-h-dvh flex flex-col items-center justify-center px-6 relative overflow-hidden"
+      className="min-h-dvh flex flex-col items-center px-6 py-4 relative overflow-x-hidden overflow-y-auto"
       style={{
         paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)",
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
@@ -63,7 +81,7 @@ export function StartScreen({
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="text-center mb-12 z-10"
+        className="text-center mb-8 z-10 mt-auto"
       >
         {/* App icon */}
         <motion.div
@@ -132,6 +150,30 @@ export function StartScreen({
           Niveaux
         </button>
 
+        <button
+          type="button"
+          onClick={onDaily}
+          className="w-full h-12 text-base font-bold text-white rounded-2xl flex items-center justify-center gap-3 border border-white/25 bg-white/10 transition-transform active:scale-95"
+        >
+          <CalendarDays className="w-5 h-5" />
+          {dailyDone ? "Rejouer le défi" : "Défi du jour"}
+        </button>
+        {dailyStreak > 0 && (
+          <p className="text-center text-xs text-white/60">
+            Série de {dailyStreak} jour{dailyStreak > 1 ? "s" : ""}
+            {dailyDone ? " · fait aujourd'hui" : ""}
+          </p>
+        )}
+
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <Toggle icon={Baby} label="Enfant" pressed={childMode} onClick={onToggleChild} />
+          <Toggle icon={Hash} label="Chiffres" pressed={showCounts} onClick={onToggleCounts} />
+          <Toggle icon={soundOn ? Volume2 : VolumeX} label="Sons" pressed={soundOn} onClick={onToggleSound} />
+        </div>
+        {childMode && (
+          <p className="text-center text-xs text-white/60">Mots simples, lus à voix haute</p>
+        )}
+
         {isConfigured && !userName && onSignIn && (
           <button
             type="button"
@@ -157,8 +199,34 @@ export function StartScreen({
         transition={{ delay: 0.8 }}
         className="mt-auto pt-8 text-xs text-white/30 z-10"
       >
-        15 niveaux · une nouvelle grille à chaque partie
+        15 niveaux · un défi chaque jour
       </motion.p>
     </div>
+  );
+}
+
+function Toggle({
+  icon: Icon,
+  label,
+  pressed,
+  onClick,
+}: {
+  icon: typeof Baby;
+  label: string;
+  pressed: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={pressed}
+      className={`h-14 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold transition-transform active:scale-95 ${
+        pressed ? "bg-white text-cyan-900" : "bg-white/10 text-white/75 border border-white/15"
+      }`}
+    >
+      <Icon className="w-4 h-4" />
+      {label}
+    </button>
   );
 }

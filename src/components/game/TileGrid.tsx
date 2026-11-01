@@ -11,6 +11,7 @@ interface TileGridProps {
   foundWords: string[];
   targetWords: string[];
   theme: Theme;
+  showCounts: boolean;
   onGestureStart: (row: number, col: number) => void;
   onTileSelect: (row: number, col: number) => void;
   onSwipeEnd: () => void;
@@ -22,6 +23,7 @@ export function TileGrid({
   foundWords,
   targetWords,
   theme,
+  showCounts,
   onGestureStart,
   onTileSelect,
   onSwipeEnd,
@@ -249,7 +251,7 @@ export function TileGrid({
                   data-tile={gone ? undefined : "true"}
                   data-row={r}
                   data-col={c}
-                  aria-label={gone ? undefined : `${letter}, utilisée ${uses} fois`}
+                  aria-label={gone ? undefined : showCounts ? `${letter}, utilisée ${uses} fois` : letter}
                   className={`relative${gone ? "" : " cursor-pointer"}`}
                   style={{
                     width: cols <= 3 ? 64 : cols <= 4 ? 56 : 48,
@@ -294,7 +296,7 @@ export function TileGrid({
                     >
                       {letter}
                     </span>
-                    {uses > 0 && (
+                    {showCounts && uses > 0 && (
                       <motion.span
                         key={uses}
                         initial={{ scale: 1.45 }}

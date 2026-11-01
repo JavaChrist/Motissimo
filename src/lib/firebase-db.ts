@@ -13,6 +13,11 @@ export interface UserProgress {
   hintsRemaining: number;
   currentLevel: number;
   seenPuzzleIds?: string[];
+  childMode?: boolean;
+  showCounts?: boolean;
+  soundEnabled?: boolean;
+  dailyStreak?: number;
+  dailyLastDate?: string;
 }
 
 const DEFAULT_PROGRESS: UserProgress = {
@@ -21,6 +26,16 @@ const DEFAULT_PROGRESS: UserProgress = {
   hintsRemaining: 5,
   currentLevel: 1,
 };
+
+export function countsAreVisible(progress: UserProgress | null): boolean {
+  if (!progress) return false;
+  if (typeof progress.showCounts === "boolean") return progress.showCounts;
+  return progress.childMode === true;
+}
+
+export function soundIsOn(progress: UserProgress | null): boolean {
+  return progress?.soundEnabled !== false;
+}
 
 const LOCAL_KEY = "wordtiles_progress";
 

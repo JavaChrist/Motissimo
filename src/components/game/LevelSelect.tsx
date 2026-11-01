@@ -135,7 +135,7 @@ export function LevelSelect({ progress, onSelect, onBack, onResetScores }: Level
                   {level.title}
                 </h3>
                 <p className="text-[11px] text-white/30">
-                  {level.grid[0].length}×{level.grid.length} · {gridsForSize(levelSize(level))} grilles
+                  {level.grid[0].length}×{level.grid.length} · {gridsForSize(levelSize(level), progress?.childMode === true)} grilles
                 </p>
 
                 {completed && (

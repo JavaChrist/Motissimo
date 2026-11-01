@@ -1,5 +1,6 @@
 import type { Level } from "./levels";
 import { LETTER_SCORES } from "./themes";
+import { FRENCH_WORDS } from "./french-words";
 
 export interface TilePos {
   row: number;
@@ -13,6 +14,8 @@ export interface GameState {
   cols: number;
   selection: TilePos[];
   foundWords: string[];
+  foundBonus: string[];
+  bonusWords: string[];
   targetWords: string[];
   score: number;
   hintsUsed: number;
@@ -24,16 +27,20 @@ export interface GameState {
   puzzleId: string;
   difficulty: 1 | 2 | 3;
   revealedSolutions: string[];
+  mode: "level" | "daily";
 }
 
-export function createGameState(level: Level, puzzleId = ""): GameState {
+export function createGameState(level: Level, puzzleId = "", mode: "level" | "daily" = "level"): GameState {
+  const targetWords = [...level.words];
   return {
     grid: level.grid,
     rows: level.grid.length,
     cols: level.grid[0].length,
     selection: [],
     foundWords: [],
-    targetWords: [...level.words],
+    foundBonus: [],
+    bonusWords: bonusWordsFor(level.grid, targetWords),
+    targetWords,
     score: 0,
     hintsUsed: 0,
     startTime: Date.now(),
@@ -44,6 +51,7 @@ export function createGameState(level: Level, puzzleId = ""): GameState {
     puzzleId,
     difficulty: level.difficulty,
     revealedSolutions: [],
+    mode,
   };
 }
 
@@ -92,7 +100,7 @@ export function getCurrentWord(state: GameState): string {
 
 export function submitWord(state: GameState): {
   state: GameState;
-  result: "correct" | "already" | "wrong";
+  result: "correct" | "already" | "wrong" | "bonus";
 } {
   const word = getCurrentWord(state);
 
@@ -100,19 +108,30 @@ export function submitWord(state: GameState): {
     return { state: clearSelection(state), result: "wrong" };
   }
 
-  if (state.foundWords.includes(word)) {
+  if (state.foundWords.includes(word) || state.foundBonus.includes(word)) {
     return { state: clearSelection(state), result: "already" };
   }
 
-  const isTarget = state.targetWords.includes(word);
+  const wordScore = word.split("").reduce((sum, letter) => sum + (LETTER_SCORES[letter] ?? 1), 0) * 10;
 
-  if (!isTarget) {
+  if (state.bonusWords.includes(word)) {
+    return {
+      state: {
+        ...state,
+        foundBonus: [...state.foundBonus, word],
+        selection: [],
+        score: state.score + wordScore,
+      },
+      result: "bonus",
+    };
+  }
+
+  if (!state.targetWords.includes(word)) {
     return { state: clearSelection(state), result: "wrong" };
   }
 
-  const wordScore = word.split("").reduce((sum, l) => sum + (LETTER_SCORES[l] ?? 1), 0) * 10;
   const newFoundWords = [...state.foundWords, word];
-  const isComplete = state.targetWords.every((w) => newFoundWords.includes(w));
+  const isComplete = state.targetWords.every((target) => newFoundWords.includes(target));
 
   return {
     state: {
@@ -209,6 +228,11 @@ function findWordPath(grid: string[][], word: string): TilePos[] | null {
 
 export function canFormWord(grid: string[][], word: string): boolean {
   return findWordPath(grid, word) !== null;
+}
+
+function bonusWordsFor(grid: string[][], targets: string[]): string[] {
+  const skip = new Set(targets);
+  return FRENCH_WORDS.filter((word) => !skip.has(word) && canFormWord(grid, word));
 }
 
 const NEIGHBORS: ReadonlyArray<readonly [number, number]> = [

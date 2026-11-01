@@ -11,6 +11,7 @@ export interface Puzzle {
   theme: string;
   grid: string[][];
   words: string[];
+  child: boolean;
 }
 
 export function levelSize(level: Level): string {
@@ -25,27 +26,33 @@ export function levelPuzzle(level: Level): Puzzle {
     theme: level.theme,
     grid: level.grid,
     words: level.words,
+    child: false,
   };
 }
 
-function withSize(puzzles: Omit<Puzzle, "size">[], size: string): Puzzle[] {
-  return puzzles.map((puzzle) => ({ ...puzzle, size }));
+function withSize(puzzles: Omit<Puzzle, "size" | "child">[], size: string): Puzzle[] {
+  return puzzles.map((puzzle) => ({ ...puzzle, size, child: true }));
 }
 
 export const LOCAL_PUZZLES: Puzzle[] = [
   ...LEVELS.map(levelPuzzle),
-  ...withSize(smallPuzzles as Omit<Puzzle, "size">[], "3x2"),
-  ...(extraPuzzles as Puzzle[]),
+  ...withSize(smallPuzzles as Omit<Puzzle, "size" | "child">[], "3x2"),
+  ...(extraPuzzles as Omit<Puzzle, "child">[]).map((puzzle) => ({ ...puzzle, child: true })),
 ];
 
-export function gridsForSize(size: string): number {
-  return LOCAL_PUZZLES.filter((puzzle) => puzzle.size === size).length;
+export function gridsForSize(size: string, childOnly = false): number {
+  return LOCAL_PUZZLES.filter((puzzle) => puzzle.size === size && (!childOnly || puzzle.child)).length;
 }
 
-export function puzzlesForLevel(list: Puzzle[], level: Level): Puzzle[] {
+export function puzzlesForLevel(list: Puzzle[], level: Level, childOnly = false): Puzzle[] {
   const size = levelSize(level);
-  const pool = list.filter((puzzle) => puzzle.size === size);
-  return pool.length > 0 ? pool : [levelPuzzle(level)];
+  const pool = list.filter((puzzle) => puzzle.size === size && (!childOnly || puzzle.child));
+  if (pool.length > 0) return pool;
+  if (childOnly) {
+    const anyChild = list.filter((puzzle) => puzzle.child);
+    if (anyChild.length > 0) return anyChild;
+  }
+  return [levelPuzzle(level)];
 }
 
 export function applyPuzzle(level: Level, puzzle: Puzzle): Level {
@@ -96,6 +103,7 @@ function asPuzzle(id: string, data: DocumentData): Puzzle | null {
     theme: typeof data.theme === "string" ? data.theme : "orange",
     grid,
     words,
+    child: data.child === true,
   };
 }
 
@@ -111,6 +119,7 @@ async function seedMissing(remoteIds: Set<string>) {
         words: puzzle.words,
         grid: puzzle.grid.map((row) => row.join("")),
         size: puzzle.size,
+        child: puzzle.child,
         rows: puzzle.grid.length,
         cols: puzzle.grid[0]?.length ?? 3,
       })
@@ -132,7 +141,9 @@ export async function loadPuzzleBank(): Promise<Puzzle[]> {
     const byId = new Map(LOCAL_PUZZLES.map((puzzle) => [puzzle.id, puzzle]));
     for (const item of snap.docs) {
       const puzzle = asPuzzle(item.id, item.data());
-      if (puzzle) byId.set(puzzle.id, puzzle);
+      if (!puzzle) continue;
+      const previous = byId.get(item.id);
+      byId.set(item.id, { ...puzzle, child: puzzle.child || previous?.child === true });
     }
     return [...byId.values()];
   } catch {

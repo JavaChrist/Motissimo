@@ -7,16 +7,18 @@ import { LevelSelect } from "@/components/game/LevelSelect";
 import { StartScreen } from "@/components/game/StartScreen";
 import { useAuth } from "@/hooks/useAuth";
 import { useGame } from "@/hooks/useGame";
-import { loadProgress, saveProgress, type UserProgress } from "@/lib/firebase-db";
+import { loadProgress, saveProgress, countsAreVisible, soundIsOn, type UserProgress } from "@/lib/firebase-db";
 import { getLevelById, LEVELS } from "@/lib/levels";
 import {
   applyPuzzle,
+  levelSize,
   LOCAL_PUZZLES,
   loadPuzzleBank,
   pickPuzzle,
   puzzlesForLevel,
   type Puzzle,
 } from "@/lib/puzzle-bank";
+import { puzzleForDay, todayKey } from "@/lib/daily";
 
 type Screen = "start" | "levels" | "game";
 
@@ -61,7 +63,7 @@ export default function Home() {
     (levelId: number, avoidId?: string) => {
       const level = getLevelById(levelId) ?? LEVELS[0];
       const puzzle = pickPuzzle(
-        puzzlesForLevel(bank, level),
+        puzzlesForLevel(bank, level, progress?.childMode === true),
         progress?.seenPuzzleIds ?? [],
         avoidId
       );
@@ -77,7 +79,7 @@ export default function Home() {
       const updated: UserProgress = { ...base, seenPuzzleIds: nextSeen };
       setProgress(updated);
       saveProgress(user?.uid ?? null, updated);
-      startLevel(applyPuzzle(level, puzzle), puzzle.id);
+      startLevel(applyPuzzle(level, puzzle), puzzle.id, "level");
       setScreen("game");
     },
     [bank, progress, startLevel, user?.uid]
@@ -92,6 +94,30 @@ export default function Home() {
     const next = levelId < LEVELS.length ? levelId + 1 : levelId;
     launchLevel(next, next === levelId ? gameState?.puzzleId : undefined);
   }, [gameState?.levelId, gameState?.puzzleId, launchLevel]);
+
+  const handleDaily = useCallback(() => {
+    const puzzle = puzzleForDay(bank, todayKey(), progress?.childMode === true);
+    if (!puzzle) return;
+    const level = LEVELS.find((item) => levelSize(item) === puzzle.size) ?? LEVELS[0];
+    startLevel(applyPuzzle(level, puzzle), puzzle.id, "daily");
+    setScreen("game");
+  }, [bank, progress?.childMode, startLevel]);
+
+  const savePatch = useCallback(
+    (partial: Partial<UserProgress>) => {
+      const base: UserProgress = progress ?? {
+        completedLevels: {},
+        totalScore: 0,
+        hintsRemaining: 5,
+        currentLevel: 1,
+        seenPuzzleIds: [],
+      };
+      const updated: UserProgress = { ...base, ...partial };
+      setProgress(updated);
+      saveProgress(user?.uid ?? null, updated);
+    },
+    [progress, user?.uid]
+  );
 
   const handleExit = useCallback(() => {
     exitGame();
@@ -111,6 +137,18 @@ export default function Home() {
           <StartScreen
             onPlay={handlePlay}
             onLevels={() => setScreen("levels")}
+            onDaily={handleDaily}
+            onToggleChild={() => {
+              const next = progress?.childMode !== true;
+              savePatch({ childMode: next, showCounts: next });
+            }}
+            onToggleCounts={() => savePatch({ showCounts: !countsAreVisible(progress) })}
+            onToggleSound={() => savePatch({ soundEnabled: !soundIsOn(progress) })}
+            childMode={progress?.childMode === true}
+            showCounts={countsAreVisible(progress)}
+            soundOn={soundIsOn(progress)}
+            dailyDone={progress?.dailyLastDate === todayKey()}
+            dailyStreak={progress?.dailyStreak ?? 0}
             userName={user?.displayName}
             onSignIn={signInWithGoogle}
             isConfigured={isConfigured}
@@ -171,6 +209,10 @@ export default function Home() {
             onSolution={handleSolution}
             onExit={handleExit}
             onNextLevel={handleNextLevel}
+            showCounts={countsAreVisible(progress)}
+            soundOn={soundIsOn(progress)}
+            onToggleSound={() => savePatch({ soundEnabled: !soundIsOn(progress) })}
+            dailyStreak={progress?.dailyStreak ?? 0}
           />
         </motion.div>
       )}
