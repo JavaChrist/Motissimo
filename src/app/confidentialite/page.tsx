@@ -72,6 +72,16 @@ export default function PrivacyPage() {
         . Désinstaller l&apos;application supprime les données stockées sur l&apos;appareil.
       </p>
 
+      <h2 className="mt-8 text-lg font-bold">Crédits</h2>
+      <p className="mt-2">
+        Les mots bonus s&apos;appuient sur la base lexicale{" "}
+        <a className="underline" href="http://www.lexique.org" target="_blank" rel="noreferrer">
+          Lexique 3
+        </a>{" "}
+        (New, Pallier et al.), diffusée sous licence CC BY-SA 4.0. La liste dérivée utilisée dans Motissimo est partagée
+        sous la même licence.
+      </p>
+
       <h2 className="mt-8 text-lg font-bold">Contact</h2>
       <p className="mt-2">JavaChrist · contact@javachrist.fr</p>
     </main>

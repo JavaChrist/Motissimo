@@ -1,4 +1,10 @@
+import lexique from "./lexique-words.json";
+
 const BANNED = new Set([
+  "CONS", "CONNE", "CONNES", "PUTE", "PUTES", "PUTAIN", "MERDE", "MERDES", "SALOPE", "SALOPES", "BITES",
+  "COUILLE", "COUILLES", "CHIER", "CHIAIS", "CHIEUR", "ENCULE", "ENCULER", "BAISE", "BAISER", "BAISES",
+  "NIQUE", "NIQUER", "PUTAINS", "FOUTRE", "BORDEL", "GARCE", "PEDE", "PD", "NAZI", "NAZIS", "VIOL", "VIOLS",
+  "SEXES", "SPERME", "ZOB", "CUL", "CULS", "CULOT", "TETON", "TETONS", "PISSE", "PISSER", "CRACHAT", "NEGRE",
   "CON", "CUL", "PET", "PIPI", "CACA", "ZIZI", "CHIER", "CHIE", "SEXE",
   "NU", "NUE", "NUS", "NUL", "PUT", "BITE", "ANUS", "FESSE",
 ]);
@@ -36,6 +42,9 @@ JOUR NUIT MIDI MATIN SOIR HIVER
 RIRE JEU BALLON VELO LIVRE IMAGE
 `.trim();
 
-export const FRENCH_WORDS: string[] = [...new Set(
-  RAW.split(/\s+/).map((word) => word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase())
-)].filter((word) => word.length >= 3 && word.length <= 8 && !BANNED.has(word));
+const EXTRA = lexique.words.split(" ");
+
+export const FRENCH_WORDS: string[] = [...new Set([
+  ...RAW.split(/\s+/).map((word) => word.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase()),
+  ...EXTRA,
+])].filter((word) => word.length >= 3 && word.length <= 10 && !BANNED.has(word));
