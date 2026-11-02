@@ -63,7 +63,7 @@ export function GameScreen({
   const theme = getTheme(gameState.theme);
   const stars = calculateStars(gameState);
   const hintsLeft = progress?.hintsRemaining ?? 0;
-  const { promo, close: closePromo } = useLevelPromo(gameState.isComplete && gameState.mode !== "daily", "motissimo");
+  const { promo, video: promoVideo, close: closePromo } = useLevelPromo(gameState.isComplete && gameState.mode !== "daily", "motissimo");
 
   useEffect(() => {
     if (gameState.isComplete) return;
@@ -395,7 +395,7 @@ export function GameScreen({
         )}
       </AnimatePresence>
 
-      {promo && <PromoInterstitial promo={promo} onClose={closePromo} />}
+      {promo && <PromoInterstitial promo={promo} video={promoVideo} onClose={closePromo} />}
     </div>
   );
 }
