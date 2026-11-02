@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Check, Lock, RotateCcw, Star } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { LEVELS } from "@/lib/levels";
-import { gridsForSize, levelSize } from "@/lib/puzzle-bank";
+import { gridsForLevel } from "@/lib/puzzle-bank";
 import { getTheme } from "@/lib/themes";
 import type { UserProgress } from "@/lib/firebase-db";
 
@@ -135,7 +135,7 @@ export function LevelSelect({ progress, onSelect, onBack, onResetScores }: Level
                   {level.title}
                 </h3>
                 <p className="text-[11px] text-white/30">
-                  {level.grid[0].length}×{level.grid.length} · {gridsForSize(levelSize(level), progress?.childMode === true)} grilles
+                  {level.grid[0].length}×{level.grid.length} · {gridsForLevel(level, progress?.childMode === true)} grilles
                 </p>
 
                 {completed && (

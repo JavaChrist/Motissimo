@@ -10,6 +10,9 @@ const STALL_MS = 6_000;
 /** Dernier recours : la croix apparaît quoi qu'il arrive. */
 const HARD_LIMIT_MS = CLOSE_AFTER_MS + 7_000;
 
+/** Sur iPhone, l'encoche / Dynamic Island recouvre le haut : la croix descend sous la zone sûre. */
+const PROMO_TOP = "calc(env(safe-area-inset-top, 0px) + 1rem)";
+
 interface PromoInterstitialProps {
   promo: Promo;
   onClose: () => void;
@@ -91,7 +94,10 @@ export function PromoInterstitial({ promo, onClose }: PromoInterstitialProps) {
         onEnded={() => setCanClose(true)}
         onError={() => setCanClose(true)}
       />
-      <p className="absolute left-4 top-4 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white">
+      <p
+        className="absolute left-4 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white"
+        style={{ top: PROMO_TOP }}
+      >
         Publicité JavaChrist · {promo.name}
       </p>
       {canClose && (
@@ -100,7 +106,8 @@ export function PromoInterstitial({ promo, onClose }: PromoInterstitialProps) {
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-black"
+            className="absolute right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-black"
+            style={{ top: PROMO_TOP }}
           >
             <X className="h-6 w-6" />
           </button>

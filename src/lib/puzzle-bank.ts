@@ -3,6 +3,7 @@ import { getFirebaseDb, isFirebaseConfigured } from "./firebase";
 import { LEVELS, type Level } from "./levels";
 import extraPuzzles from "./puzzles-extra.json";
 import smallPuzzles from "./puzzles-3x2.json";
+import levelPuzzles from "./puzzles-levels.json";
 
 export interface Puzzle {
   id: string;
@@ -10,6 +11,18 @@ export interface Puzzle {
   title: string;
   theme: string;
   grid: string[][];
+  words: string[];
+  child: boolean;
+  /** Niveau auquel appartient la grille : ses mots suivent le titre du niveau. Absent pour les anciennes grilles par taille. */
+  levelId?: number;
+}
+
+interface LevelPuzzleData {
+  id: string;
+  level: number;
+  title: string;
+  theme: string;
+  grid: string[];
   words: string[];
   child: boolean;
 }
@@ -34,22 +47,41 @@ function withSize(puzzles: Omit<Puzzle, "size" | "child">[], size: string): Puzz
   return puzzles.map((puzzle) => ({ ...puzzle, size, child: true }));
 }
 
+const THEMED_PUZZLES: Puzzle[] = (levelPuzzles as LevelPuzzleData[]).map((puzzle) => ({
+  id: puzzle.id,
+  size: `${puzzle.grid[0].length}x${puzzle.grid.length}`,
+  title: puzzle.title,
+  theme: puzzle.theme,
+  grid: puzzle.grid.map((row) => [...row]),
+  words: puzzle.words,
+  child: puzzle.child,
+  levelId: puzzle.level,
+}));
+
+const themedLevels = new Set(THEMED_PUZZLES.map((puzzle) => puzzle.levelId));
+
 export const LOCAL_PUZZLES: Puzzle[] = [
-  ...LEVELS.map(levelPuzzle),
+  ...THEMED_PUZZLES,
+  ...LEVELS.filter((level) => !themedLevels.has(level.id)).map(levelPuzzle),
   ...withSize(smallPuzzles as Omit<Puzzle, "size" | "child">[], "3x2"),
   ...(extraPuzzles as Omit<Puzzle, "child">[]).map((puzzle) => ({ ...puzzle, child: true })),
 ];
 
-export function gridsForSize(size: string, childOnly = false): number {
-  return LOCAL_PUZZLES.filter((puzzle) => puzzle.size === size && (!childOnly || puzzle.child)).length;
+export function gridsForLevel(level: Level, childOnly = false): number {
+  return puzzlesForLevel(LOCAL_PUZZLES, level, childOnly).length;
 }
 
+/** Grilles du niveau (mots liés à son titre) ; à défaut, anciennes grilles de même taille. */
 export function puzzlesForLevel(list: Puzzle[], level: Level, childOnly = false): Puzzle[] {
+  const own = list.filter((puzzle) => puzzle.levelId === level.id && (!childOnly || puzzle.child));
+  if (own.length > 0) return own;
   const size = levelSize(level);
-  const pool = list.filter((puzzle) => puzzle.size === size && (!childOnly || puzzle.child));
+  const pool = list.filter(
+    (puzzle) => puzzle.levelId === undefined && puzzle.size === size && (!childOnly || puzzle.child)
+  );
   if (pool.length > 0) return pool;
   if (childOnly) {
-    const anyChild = list.filter((puzzle) => puzzle.child);
+    const anyChild = list.filter((puzzle) => puzzle.child && puzzle.levelId === undefined);
     if (anyChild.length > 0) return anyChild;
   }
   return [levelPuzzle(level)];
@@ -104,6 +136,7 @@ function asPuzzle(id: string, data: DocumentData): Puzzle | null {
     grid,
     words,
     child: data.child === true,
+    levelId: typeof data.levelId === "number" ? data.levelId : undefined,
   };
 }
 
@@ -120,6 +153,7 @@ async function seedMissing(remoteIds: Set<string>) {
         grid: puzzle.grid.map((row) => row.join("")),
         size: puzzle.size,
         child: puzzle.child,
+        ...(puzzle.levelId === undefined ? {} : { levelId: puzzle.levelId }),
         rows: puzzle.grid.length,
         cols: puzzle.grid[0]?.length ?? 3,
       })
@@ -143,6 +177,7 @@ export async function loadPuzzleBank(): Promise<Puzzle[]> {
       const puzzle = asPuzzle(item.id, item.data());
       if (!puzzle) continue;
       const previous = byId.get(item.id);
+      if (previous?.levelId !== undefined) continue; // grilles thématiques : la version du jeu fait foi
       byId.set(item.id, { ...puzzle, child: puzzle.child || previous?.child === true });
     }
     return [...byId.values()];

@@ -166,8 +166,12 @@ export function GameScreen({
           foundWords={gameState.foundWords}
           theme={theme}
         />
+      </div>
+
+      {/* Mots bonus : hauteur fixe sous les mots et au-dessus des tuiles, pour que rien ne bouge */}
+      <div className="z-10 shrink-0 h-11 px-6 overflow-y-auto flex items-start justify-center">
         {gameState.foundBonus.length > 0 && (
-          <p className="mt-2 text-center text-[11px] font-bold tracking-wide text-white/75">
+          <p className="text-center text-[11px] font-bold tracking-wide text-white/75 leading-snug">
             Bonus · {gameState.foundBonus.join(" · ")}
           </p>
         )}

@@ -113,7 +113,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 10,
-    title: "Exploration",
+    title: "Animaux",
     grid: [
       ["A", "R", "B", "E"],
       ["I", "S", "O", "L"],
@@ -137,7 +137,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 12,
-    title: "Aventure",
+    title: "Sport",
     grid: [
       ["V", "O", "Y", "A"],
       ["E", "N", "T", "G"],
@@ -149,7 +149,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 13,
-    title: "Le Savoir",
+    title: "À l'École",
     grid: [
       ["C", "E", "R", "V"],
       ["A", "M", "E", "S"],
@@ -161,7 +161,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 14,
-    title: "Défi Expert",
+    title: "Vacances",
     grid: [
       ["V", "I", "E", "R"],
       ["L", "A", "S", "M"],
@@ -173,7 +173,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 15,
-    title: "Grand Maître",
+    title: "Les Fêtes",
     grid: [
       ["E", "S", "V", "O"],
       ["F", "P", "R", "A"],
