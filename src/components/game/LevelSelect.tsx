@@ -30,7 +30,7 @@ export function LevelSelect({ progress, onSelect, onBack, onResetScores }: Level
 
   return (
     <div
-      className="h-dvh flex flex-col relative overflow-hidden"
+      className="h-app flex flex-col relative overflow-hidden"
       style={{
         background: `
           linear-gradient(180deg,

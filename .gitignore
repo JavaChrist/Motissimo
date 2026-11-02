@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android : secrets de signature
+android/keystore.properties
+*.jks
+*.keystore
+android/app/google-services.json
+
+# Firebase emulators
+firestore-debug.log
+*-debug.log

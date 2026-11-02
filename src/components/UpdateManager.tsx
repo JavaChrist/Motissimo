@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { isNativeApp } from "@/lib/platform";
 
 const SNOOZE_KEY = "motissimo.pwa.snoozeUntil";
 const ACK_KEY = "motissimo.pwa.lastAcknowledgedAppVersion";
@@ -55,7 +56,8 @@ export function UpdateManager({ pageVersion }: { pageVersion: string }) {
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    if (pageVersion === "dev" || typeof window === "undefined") return;
+    // Dans l'app Android, les mises à jour passent par le Play Store.
+    if (pageVersion === "dev" || typeof window === "undefined" || isNativeApp()) return;
     let timer = 0;
     let lastCheck = 0;
     let inFlight = false;
@@ -103,7 +105,7 @@ export function UpdateManager({ pageVersion }: { pageVersion: string }) {
   }, [pageVersion]);
 
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (!("serviceWorker" in navigator) || isNativeApp()) return;
 
     if (process.env.NODE_ENV !== "production") {
       navigator.serviceWorker.getRegistrations().then((regs) => {

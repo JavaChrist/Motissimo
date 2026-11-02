@@ -38,7 +38,7 @@ export function StartScreen({
 }: StartScreenProps) {
   return (
     <div
-      className="min-h-dvh flex flex-col items-center px-6 py-4 relative overflow-x-hidden overflow-y-auto"
+      className="min-h-app flex flex-col items-center px-6 py-4 relative overflow-x-hidden overflow-y-auto"
       style={{
         paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)",
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",

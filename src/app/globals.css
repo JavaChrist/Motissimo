@@ -2,6 +2,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Hauteur de l'écran moins la bannière AdMob (--ad-banner-height, posée par AdBanner ; 0 sans bannière). */
+@utility h-app {
+  height: calc(100dvh - var(--ad-banner-height, 0px));
+}
+@utility min-h-app {
+  min-height: calc(100dvh - var(--ad-banner-height, 0px));
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

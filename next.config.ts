@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
+// `npm run build:android` : export statique embarqué dans l'APK (pas de serveur, pas d'en-têtes HTTP).
+const nativeBuild = process.env.CAPACITOR_BUILD === "1";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  ...(nativeBuild && { output: "export" as const, images: { unoptimized: true } }),
   turbopack: {
     rules: {
       "*.css": {
@@ -11,6 +15,7 @@ const nextConfig: NextConfig = {
     },
   },
   async headers() {
+    if (nativeBuild) return [];
     return [
       {
         source: "/sw.js",

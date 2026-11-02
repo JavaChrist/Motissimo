@@ -20,6 +20,8 @@ import {
 } from "@/lib/puzzle-bank";
 import { puzzleForDay, todayKey } from "@/lib/daily";
 import { primeSpeech } from "@/lib/speech";
+import { AgeGate } from "@/components/promo/AgeGate";
+import { AdBanner } from "@/components/ads/AdBanner";
 
 type Screen = "start" | "levels" | "game";
 
@@ -128,6 +130,9 @@ export default function Home() {
   }, [exitGame]);
 
   return (
+    <>
+    <AgeGate />
+      <AdBanner />
     <AnimatePresence mode="wait">
       {screen === "start" && !gameState && (
         <motion.div
@@ -221,5 +226,6 @@ export default function Home() {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 }

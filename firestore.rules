@@ -1,6 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Administrateur JavaChrist : claim `admin` posé par script, jamais par le client.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     match /puzzles/{id} {
       allow read: if true;
       allow create, update: if request.auth != null;
@@ -8,6 +13,21 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Référentiel des applications et campagnes (brouillons compris) : administration seule.
+    match /apps/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /campaigns/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Projection publiée par l'API serveur (SDK Admin) : lecture seule pour les jeux.
+    match /public_catalogs/{sourceAppId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

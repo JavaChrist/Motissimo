@@ -14,6 +14,8 @@ import {
 import { TileGrid } from "./TileGrid";
 import { WordDisplay } from "./WordDisplay";
 import { getTheme } from "@/lib/themes";
+import { PromoInterstitial } from "@/components/promo/PromoInterstitial";
+import { useLevelPromo } from "@/lib/promo/use-level-promo";
 import { calculateStars, type GameState } from "@/lib/game-engine";
 import type { FeedbackType } from "@/hooks/useGame";
 import type { UserProgress } from "@/lib/firebase-db";
@@ -61,6 +63,7 @@ export function GameScreen({
   const theme = getTheme(gameState.theme);
   const stars = calculateStars(gameState);
   const hintsLeft = progress?.hintsRemaining ?? 0;
+  const { promo, close: closePromo } = useLevelPromo(gameState.isComplete && gameState.mode !== "daily", "motissimo");
 
   useEffect(() => {
     if (gameState.isComplete) return;
@@ -89,7 +92,7 @@ export function GameScreen({
 
   return (
     <div
-      className="h-dvh flex flex-col relative overflow-hidden"
+      className="h-app flex flex-col relative overflow-hidden"
       style={{ background: theme.background }}
     >
       <div
@@ -387,6 +390,8 @@ export function GameScreen({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {promo && <PromoInterstitial promo={promo} onClose={closePromo} />}
     </div>
   );
 }

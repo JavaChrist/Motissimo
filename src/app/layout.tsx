@@ -47,7 +47,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-dvh flex flex-col bg-background font-sans">
+      <body className="min-h-app flex flex-col bg-background font-sans">
         <ConfirmProvider>
           {children}
           <UpdateManager pageVersion={process.env.VERCEL_GIT_COMMIT_SHA ?? "dev"} />
