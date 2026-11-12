@@ -24,6 +24,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Bibliothèque de clips (fiches) : administration seule.
+    match /clips/{id} {
+      allow read, write: if isAdmin();
+    }
+
     // Projection publiée par l'API serveur (SDK Admin) : lecture seule pour les jeux.
     match /public_catalogs/{sourceAppId} {
       allow read: if true;
