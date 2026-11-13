@@ -624,13 +624,12 @@
     "theme": "pink",
     "grid": [
       "JNAL",
-      "VITP"
+      "UITP"
     ],
     "words": [
       "LAIT",
       "PAIN",
-      "PLAT",
-      "VIN"
+      "PLAT"
     ],
     "child": true
   },

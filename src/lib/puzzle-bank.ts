@@ -1,4 +1,5 @@
 import { collection, doc, getDocs, setDoc, type DocumentData } from "firebase/firestore";
+import { BANNED_WORDS } from "./banned-words";
 import { getFirebaseDb, isFirebaseConfigured } from "./firebase";
 import { LEVELS, type Level } from "./levels";
 import extraPuzzles from "./puzzles-extra.json";
@@ -125,7 +126,8 @@ function asPuzzle(id: string, data: DocumentData): Puzzle | null {
   const grid = normalizeGrid(data.grid);
   if (!grid || !Array.isArray(data.words)) return null;
   const words = data.words.filter((word: unknown): word is string => typeof word === "string");
-  if (words.length === 0) return null;
+  // Une grille en ligne avec un mot interdit (grossièreté, alcool…) est ignorée.
+  if (words.length === 0 || words.some((word: string) => BANNED_WORDS.has(word))) return null;
   const size =
     typeof data.size === "string" ? data.size : `${grid[0].length}x${grid.length}`;
   return {

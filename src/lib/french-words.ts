@@ -1,13 +1,5 @@
+import { BANNED_WORDS } from "./banned-words";
 import lexique from "./lexique-words.json";
-
-const BANNED = new Set([
-  "CONS", "CONNE", "CONNES", "PUTE", "PUTES", "PUTAIN", "MERDE", "MERDES", "SALOPE", "SALOPES", "BITES",
-  "COUILLE", "COUILLES", "CHIER", "CHIAIS", "CHIEUR", "ENCULE", "ENCULER", "BAISE", "BAISER", "BAISES",
-  "NIQUE", "NIQUER", "PUTAINS", "FOUTRE", "BORDEL", "GARCE", "PEDE", "PD", "NAZI", "NAZIS", "VIOL", "VIOLS",
-  "SEXES", "SPERME", "ZOB", "CUL", "CULS", "CULOT", "TETON", "TETONS", "PISSE", "PISSER", "CRACHAT", "NEGRE",
-  "CON", "CUL", "PET", "PIPI", "CACA", "ZIZI", "CHIER", "CHIE", "SEXE",
-  "NU", "NUE", "NUS", "NUL", "PUT", "BITE", "ANUS", "FESSE",
-]);
 
 const RAW = `
 AMI ANE ARC ART AUBE
@@ -47,4 +39,4 @@ const EXTRA = lexique.words.split(" ");
 export const FRENCH_WORDS: string[] = [...new Set([
   ...RAW.split(/\s+/).map((word) => word.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase()),
   ...EXTRA,
-])].filter((word) => word.length >= 3 && word.length <= 10 && !BANNED.has(word));
+])].filter((word) => word.length >= 3 && word.length <= 10 && !BANNED_WORDS.has(word));
