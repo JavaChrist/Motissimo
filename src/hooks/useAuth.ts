@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   signInAnonymously,
   onAuthStateChanged,
@@ -17,6 +17,8 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(configured);
 
+  const signingIn = useRef(false);
+
   useEffect(() => {
     if (!configured) return;
 
@@ -26,13 +28,19 @@ export function useAuth() {
       setLoading(false);
     });
 
-    signInAnonymously(auth).catch(() => setLoading(false));
+    // On attend la session enregistrée : connexion anonyme seulement s'il n'y a personne,
+    // sinon on écraserait le compte Google à chaque lancement.
+    auth
+      .authStateReady()
+      .then(() => (auth.currentUser ? undefined : signInAnonymously(auth)))
+      .catch(() => setLoading(false));
 
     return unsub;
   }, [configured]);
 
   const signInWithGoogle = useCallback(async () => {
-    if (!isFirebaseConfigured()) return;
+    if (!isFirebaseConfigured() || signingIn.current) return;
+    signingIn.current = true;
     const auth = getFirebaseAuth();
     try {
       if (isNativeApp()) {
@@ -45,7 +53,11 @@ export function useAuth() {
         return;
       }
       await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch {}
+    } catch (error) {
+      console.warn("Connexion Google impossible", error);
+    } finally {
+      signingIn.current = false;
+    }
   }, []);
 
   return { user, loading, signInWithGoogle, isConfigured: isFirebaseConfigured() };
