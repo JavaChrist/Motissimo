@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -44,6 +47,15 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Identifiant publicitaire, requis pour AdMob sur Android 13+ (à déclarer dans Play Console). -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+    <!--
+      Aucun identifiant publicitaire : les permissions déclarées par le SDK Google Mobile Ads sont retirées
+      du manifeste fusionné. Les annonces restent servies, sans ciblage par identifiant.
+      Play Console, « Identifiant publicitaire » : Non.
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
+    <!-- Privacy Sandbox (Topics, Attribution) ajoutés par Google Mobile Ads : retirés, public avec des mineurs. -->
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_TOPICS" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove" />
 </manifest>
