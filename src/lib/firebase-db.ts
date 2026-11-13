@@ -10,7 +10,8 @@ import { getFirebaseDb, isFirebaseConfigured } from "./firebase";
 export interface UserProgress {
   completedLevels: Record<string, { stars: number; score: number; bestTime: number }>;
   totalScore: number;
-  hintsRemaining: number;
+  /** Ancien compteur global d'Idées, plus utilisé : les Idées sont comptées par partie (GameState). */
+  hintsRemaining?: number;
   currentLevel: number;
   seenPuzzleIds?: string[];
   childMode?: boolean;
@@ -23,7 +24,6 @@ export interface UserProgress {
 const DEFAULT_PROGRESS: UserProgress = {
   completedLevels: {},
   totalScore: 0,
-  hintsRemaining: 5,
   currentLevel: 1,
 };
 

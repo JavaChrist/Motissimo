@@ -19,6 +19,8 @@ export interface GameState {
   targetWords: string[];
   score: number;
   hintsUsed: number;
+  /** Idées disponibles dans cette partie : 0 au départ, +1 par mot bonus trouvé. */
+  hintsAvailable: number;
   startTime: number;
   isComplete: boolean;
   title: string;
@@ -43,6 +45,7 @@ export function createGameState(level: Level, puzzleId = "", mode: "level" | "da
     targetWords,
     score: 0,
     hintsUsed: 0,
+    hintsAvailable: 0,
     startTime: Date.now(),
     isComplete: false,
     title: level.title,
@@ -121,6 +124,7 @@ export function submitWord(state: GameState): {
         foundBonus: [...state.foundBonus, word],
         selection: [],
         score: state.score + wordScore,
+        hintsAvailable: state.hintsAvailable + 1,
       },
       result: "bonus",
     };
@@ -146,6 +150,7 @@ export function submitWord(state: GameState): {
 }
 
 export function revealHint(state: GameState): GameState {
+  if (state.hintsAvailable <= 0) return state;
   const remaining = state.targetWords.filter((w) => !state.foundWords.includes(w));
   if (remaining.length === 0) return state;
 
@@ -157,6 +162,7 @@ export function revealHint(state: GameState): GameState {
     ...state,
     selection: [path[0]],
     hintsUsed: state.hintsUsed + 1,
+    hintsAvailable: state.hintsAvailable - 1,
   };
 }
 

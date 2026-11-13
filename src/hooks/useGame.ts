@@ -136,17 +136,8 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
   }, [gameState]);
 
   const handleHint = useCallback(() => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      if (progress && progress.hintsRemaining <= 0) return prev;
-      if (progress) {
-        const updated = { ...progress, hintsRemaining: progress.hintsRemaining - 1 };
-        saveProgress(uid, updated);
-        setProgress(updated);
-      }
-      return revealHint(prev);
-    });
-  }, [uid, progress, setProgress]);
+    setGameState((prev) => (prev ? revealHint(prev) : prev));
+  }, []);
 
   const exitGame = useCallback(() => {
     setGameState(null);

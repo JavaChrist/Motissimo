@@ -76,7 +76,6 @@ export default function Home() {
       const base: UserProgress = progress ?? {
         completedLevels: {},
         totalScore: 0,
-        hintsRemaining: 5,
         currentLevel: 1,
         seenPuzzleIds: [],
       };
@@ -113,7 +112,6 @@ export default function Home() {
       const base: UserProgress = progress ?? {
         completedLevels: {},
         totalScore: 0,
-        hintsRemaining: 5,
         currentLevel: 1,
         seenPuzzleIds: [],
       };
@@ -181,7 +179,6 @@ export default function Home() {
               const base: UserProgress = progress ?? {
                 completedLevels: {},
                 totalScore: 0,
-                hintsRemaining: 5,
                 currentLevel: 1,
                 seenPuzzleIds: [],
               };
@@ -207,7 +204,6 @@ export default function Home() {
         >
           <GameScreen
             gameState={gameState}
-            progress={progress}
             feedback={feedback}
             currentWord={currentWord}
             onGestureStart={handleGestureStart}

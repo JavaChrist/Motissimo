@@ -18,11 +18,9 @@ import { PromoInterstitial } from "@/components/promo/PromoInterstitial";
 import { useLevelPromo } from "@/lib/promo/use-level-promo";
 import { calculateStars, type GameState } from "@/lib/game-engine";
 import type { FeedbackType } from "@/hooks/useGame";
-import type { UserProgress } from "@/lib/firebase-db";
 
 interface GameScreenProps {
   gameState: GameState;
-  progress: UserProgress | null;
   feedback: FeedbackType;
   currentWord: string;
   onGestureStart: (row: number, col: number) => void;
@@ -41,7 +39,6 @@ interface GameScreenProps {
 
 export function GameScreen({
   gameState,
-  progress,
   feedback,
   currentWord,
   onGestureStart,
@@ -62,7 +59,7 @@ export function GameScreen({
   const solution = shownSolution?.puzzleId === gameState.puzzleId ? shownSolution.word : null;
   const theme = getTheme(gameState.theme);
   const stars = calculateStars(gameState);
-  const hintsLeft = progress?.hintsRemaining ?? 0;
+  const hintsLeft = gameState.hintsAvailable;
   const { promo, video: promoVideo, close: closePromo } = useLevelPromo(gameState.isComplete && gameState.mode !== "daily", "motissimo");
 
   useEffect(() => {
