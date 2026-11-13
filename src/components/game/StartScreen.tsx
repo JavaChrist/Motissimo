@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Baby, CalendarDays, Hash, LayoutGrid, LogIn, Play, User, Volume2, VolumeX } from "lucide-react";
+import { Baby, CalendarDays, Hash, LayoutGrid, LogIn, Play, Shield, User, Volume2, VolumeX } from "lucide-react";
+import Link from "next/link";
 
 interface StartScreenProps {
   onPlay: () => void;
@@ -193,14 +194,21 @@ export function StartScreen({
         )}
       </motion.div>
 
-      <motion.p
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="mt-auto pt-8 text-xs text-white/30 z-10"
+        className="mt-auto pt-8 flex flex-col items-center gap-1 text-xs z-10"
       >
-        15 niveaux · un défi chaque jour
-      </motion.p>
+        <p className="text-white/30">15 niveaux · un défi chaque jour</p>
+        <Link
+          href="/informations-legales"
+          className="inline-flex min-h-8 items-center gap-1 px-2 text-white/50 underline-offset-2 hover:text-white/80 hover:underline"
+        >
+          <Shield className="w-3.5 h-3.5" />
+          Confidentialité et informations légales
+        </Link>
+      </motion.div>
     </div>
   );
 }

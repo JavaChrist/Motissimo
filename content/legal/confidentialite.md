@@ -1,0 +1,64 @@
+ > BROUILLON — informations et clauses à compléter et valider avant publication.
+
+# Politique de confidentialité — Motissimo
+
+Version 0.1.2 — 2026-11-13
+
+## Responsable et périmètre
+
+Christian Grohens, 5 rue Maurice Fonvieille, 31120 Portet-sur-Garonne, France, détermine les finalités et moyens des traitements décrits ici pour Motissimo (https://motissimo.vercel.app). Contact données personnelles : support@javachrist.fr. Cette politique concerne l’application et les fonctionnalités effectivement disponibles.
+
+## Données et usages
+
+| Finalité | Données | Base légale | Nécessité / refus | Destinataires | Conservation | Provenance |
+| --- | --- | --- | --- | --- | --- | --- |
+| Compte joueur anonyme : retrouver sa progression (web et Android) | Identifiant technique du compte anonyme créé automatiquement au premier lancement, dates de création et de connexion. Aucun nom, aucune adresse e-mail. | Exécution des conditions d'utilisation : conserver la progression du jeu demandée par l'utilisateur | Création automatique. Sans connexion au service, le jeu reste jouable et la progression est gardée sur l'appareil | Google Ireland Limited (Firebase Authentication), sous-traitant | Jusqu'à la suppression du compte, demandée à support@javachrist.fr | Créé par l'application |
+| Connexion Google facultative : retrouver sa progression sur un autre appareil | Identifiant Google, adresse e-mail, nom et photo de profil transmis par Google, identifiant technique du compte, dates de création et de connexion. Ces données restent dans Firebase Authentication et ne sont pas copiées dans la base de jeu. | Exécution des conditions d'utilisation : rattacher la progression au compte Google choisi par l'utilisateur | Facultatif : le jeu fonctionne sans connexion Google | Google Ireland Limited (Firebase Authentication), sous-traitant | Jusqu'à la suppression du compte, demandée à support@javachrist.fr | Transmises par Google lors de la connexion |
+| Sauvegarder la progression et les réglages du jeu | Niveaux terminés avec étoiles, score et meilleur temps, score total, niveau en cours, grilles déjà jouées, série et date du défi du jour, réglages (son, mode enfant, affichage des compteurs), date de mise à jour. Aucun nom, aucune adresse e-mail. | Exécution des conditions d'utilisation : fournir la progression du jeu demandée par l'utilisateur | Enregistrement automatique. Sans connexion, la progression reste seulement sur l'appareil | Google Ireland Limited (Cloud Firestore, multirégion Europe eur3), sous-traitant. Une copie reste dans le stockage local de l'appareil | Tant que le compte existe ; suppression sur demande à support@javachrist.fr. La copie locale est effacée en vidant les données du site ou de l'application, ou en désinstallant l'application | Produites sur l'appareil pendant le jeu |
+| Réserver la publicité et les vidéos de promotion aux joueurs majeurs | Année de naissance déclarée, état des vidéos de promotion (dernière vidéo montrée et son heure, catalogue des vidéos en cache) | Obligation légale et intérêt légitime de l'éditeur à protéger les mineurs : aucune publicité ni vidéo de promotion pour un joueur mineur ou sans réponse | Facultatif : sans réponse, le joueur est traité comme un mineur | Aucun : l'année de naissance et l'état des vidéos restent dans le stockage local de l'appareil et ne sont pas transmis à l'éditeur | Jusqu'à l'effacement en vidant les données du site ou de l'application, ou en désinstallant l'application | Déclarée par l'utilisateur sur l'appareil |
+| Afficher une bannière publicitaire dans l'application Android (joueurs majeurs) | Adresse IP, identifiant publicitaire Android (sauf si l'utilisateur l'a supprimé dans les réglages de son appareil), modèle et version de l'appareil et du système, langue, application et emplacement de l'annonce, interactions avec l'annonce, choix de consentement (chaîne TCF) | Consentement recueilli par le formulaire Google (UMP) pour les joueurs majeurs de l'Espace économique européen et du Royaume-Uni | Facultatif : aucune demande d'annonce pour un joueur mineur ou sans réponse, ni sur le site web | Google Ireland Limited (Google AdMob et User Messaging Platform), qui agit en responsable de traitement pour ses propres finalités publicitaires | Selon les règles de conservation de Google : https://policies.google.com/technologies/retention | Collecte par le SDK Google Mobile Ads intégré à l'application Android |
+| Présenter les autres applications de l'éditeur à la fin d'un niveau (joueurs majeurs, web et Android) | Données techniques de la requête reçues par Google lors du chargement du catalogue et de la vidéo : adresse IP, date et heure, type de navigateur ou d'appareil. Le jeu n'envoie aucun identifiant, aucun compteur ni aucun clic à l'éditeur. | Intérêt légitime de l'éditeur à faire connaître ses autres applications | Facultatif : aucune vidéo ni chargement du catalogue pour un joueur mineur ou sans réponse | Google Ireland Limited (Cloud Firestore et Cloud Storage for Firebase), hébergeur du catalogue des promotions JavaChrist, sous-traitant | Le catalogue est gardé en cache sur l'appareil une heure au plus ; les journaux techniques de Google suivent les règles de conservation de Google | Collecte directe par Google lors du chargement |
+| Faire fonctionner et sécuriser la version web | Données techniques de connexion : adresse IP, page demandée, date et heure, type de navigateur | Intérêt légitime de l'éditeur à fournir un service web fonctionnel et sécurisé | Nécessaire pour accéder à la version web | Vercel Inc., hébergeur, sous-traitant | Journaux techniques conservés par notre hébergeur Vercel (offre Pro) : 1 jour, ou 30 jours au plus lorsque l'option d'observabilité avancée (Observability Plus) est active | Collecte directe par l'hébergeur lors de chaque connexion |
+
+## Prestataires et circulation des données
+
+Les destinataires et lieux de traitement sont décrits ci-dessous. Les accès depuis un pays tiers et les mesures d’encadrement des transferts doivent également y figurer, même lorsque le stockage principal est européen.
+
+| Prestataire | Rôle | Données | Localisation | Transferts et garanties |
+| --- | --- | --- | --- | --- |
+| Vercel Inc. | Hébergement et diffusion de la version web, sous-traitant | Données techniques de connexion | États-Unis (siège) et réseau de diffusion mondial | Vercel peut traiter ces données hors de l'Espace économique européen, notamment aux États-Unis. Les transferts sont encadrés par le cadre de protection des données UE–États-Unis (EU-US Data Privacy Framework) et par les clauses contractuelles types de la Commission européenne (article 46 du RGPD) : https://vercel.com/legal/dpa. Informations complémentaires : support@javachrist.fr. |
+| Google Ireland Limited — Firebase (projet Motissimo) | Authentification des comptes, base de données de la progression, catalogue et vidéos des promotions JavaChrist, sous-traitant | Données de compte, progression et réglages, données techniques des requêtes | Base de données Cloud Firestore en multirégion Europe (eur3) ; Firebase Authentication et Cloud Storage opérés par Google, notamment aux États-Unis | Google peut traiter ces données hors de l'Espace économique européen, notamment aux États-Unis. Les transferts sont encadrés par le cadre de protection des données UE–États-Unis (EU-US Data Privacy Framework), auquel Google LLC adhère, et par les clauses contractuelles types de la Commission européenne (article 46 du RGPD). Conditions applicables : https://firebase.google.com/terms/data-processing-terms |
+| Google Ireland Limited — Google AdMob et User Messaging Platform | Bannière publicitaire et recueil du consentement dans l'application Android, responsable de traitement pour ses propres finalités | Données publicitaires décrites dans le tableau des traitements (adresse IP, identifiant publicitaire, appareil, interactions, choix de consentement) | Infrastructure Google, notamment aux États-Unis | Google peut traiter ces données hors de l'Espace économique européen, notamment aux États-Unis. Les transferts sont encadrés par le cadre de protection des données UE–États-Unis (EU-US Data Privacy Framework), auquel Google LLC adhère, et par les clauses contractuelles types de la Commission européenne (article 46 du RGPD). Règles de Google : https://policies.google.com/privacy et https://business.safety.google/privacy/ |
+| Google Ireland Limited — Google Play | Distribution de l'application Android, responsable de traitement pour ses propres finalités | Données de téléchargement et d'installation traitées par Google ; l'éditeur ne reçoit que des statistiques agrégées | Infrastructure Google, notamment aux États-Unis | Google peut traiter ces données hors de l'Espace économique européen, notamment aux États-Unis. Les transferts sont encadrés par le cadre de protection des données UE–États-Unis (EU-US Data Privacy Framework), auquel Google LLC adhère, et par les clauses contractuelles types de la Commission européenne (article 46 du RGPD). Règles de Google : https://policies.google.com/privacy |
+
+## Sécurité
+
+Les pages et les échanges avec les serveurs sont chiffrés (HTTPS). Chaque compte ne peut lire et modifier que sa propre progression, selon les règles de sécurité de la base de données. Les mots de passe Google ne sont jamais transmis à l'éditeur. Aucune mesure ne garantit une sécurité absolue ; l'accès à l'appareil reste sous le contrôle de l'utilisateur.
+
+## Stockages sur le terminal
+
+Site web : aucun cookie ni traceur publicitaire ou de mesure d'audience. Le stockage local du navigateur (localStorage) conserve la progression, les réglages, l'année de naissance déclarée, l'état des vidéos de promotion et l'état des mises à jour du site ; la connexion au compte est conservée par Firebase Authentication dans le stockage du navigateur. Ces stockages sont strictement nécessaires au service demandé et ne demandent pas de consentement. Application Android : les mêmes données sont conservées dans le stockage de l'application ; le SDK Google Mobile Ads et le formulaire de consentement de Google y enregistrent en outre les choix publicitaires et des données techniques, dans les conditions décrites à la rubrique Publicité.
+
+## Compte et sauvegardes
+
+Un compte anonyme est créé automatiquement au premier lancement pour sauvegarder la progression. L'utilisateur peut se connecter avec Google pour retrouver sa progression sur un autre appareil. Aucun mot de passe n'est créé chez l'éditeur.
+
+## Publicité
+
+Le site web n'affiche aucune publicité tierce. L'application Android affiche une bannière Google AdMob aux seuls joueurs majeurs. Pour un joueur majeur de l'Espace économique européen ou du Royaume-Uni, Google recueille son consentement par son formulaire (User Messaging Platform) avant la première annonce. Un joueur mineur ou sans réponse à la question d'âge ne reçoit aucune annonce : aucune demande n'est envoyée à Google. Effacer les données du jeu sur l'appareil ne supprime pas les données déjà transmises à Google. À la fin d'un niveau, le jeu peut aussi présenter en vidéo d'autres applications de l'éditeur, seulement à un joueur majeur ; ces vidéos sont fournies par l'éditeur et ne contiennent aucune publicité tierce.
+
+
+## Mineurs
+
+Le jeu s'adresse à tous, enfants compris, et propose un mode enfant. Une question demande l'année de naissance ; la réponse reste sur l'appareil et sert uniquement à savoir si le joueur est majeur. Un joueur mineur ou sans réponse ne voit ni publicité ni vidéo de promotion. La connexion Google d'un enfant relève des règles de Google sur les comptes des mineurs.
+
+
+## Profilage et décisions automatisées
+
+Aucun profilage ni décision automatisée. Le tirage des grilles tient seulement compte des grilles déjà jouées.
+
+## Vos droits
+
+Vous pouvez exercer les droits applicables à votre situation auprès de support@javachrist.fr : accès, rectification, effacement, limitation, opposition et portabilité sous leurs conditions respectives. Lorsque le traitement repose sur le consentement, vous pouvez le retirer sans remettre en cause la licéité du traitement antérieur. Vous pouvez adresser une réclamation à la CNIL : https://www.cnil.fr/fr/plaintes.
+
+Les modalités pratiques et délais sont détaillés dans Droits RGPD. Toute évolution substantielle des traitements doit donner lieu à une information adaptée et, lorsque nécessaire, à un nouveau recueil du consentement.

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { setBirthYear, useAgeStatus } from "@/lib/promo/age-gate";
@@ -45,6 +46,13 @@ export function AgeGate() {
         >
           Continuer
         </Button>
+        <Link
+          href="/confidentialite"
+          className="mt-4 inline-flex min-h-8 items-center text-xs underline underline-offset-2"
+          style={{ color: "#8B7D6B" }}
+        >
+          Confidentialité
+        </Link>
       </div>
     </div>
   );

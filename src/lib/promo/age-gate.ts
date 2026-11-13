@@ -36,6 +36,14 @@ export function setBirthYear(year: number) {
   listeners.forEach((callback) => callback());
 }
 
+/** Oublie l'année de naissance : la question est reposée, et les annonces s'arrêtent tant qu'on n'y a pas répondu. */
+export function clearBirthYear() {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {}
+  listeners.forEach((callback) => callback());
+}
+
 /** Lecture synchrone, hors React, pour décider d'afficher une promotion. */
 export function isAdult(): boolean {
   return typeof window !== "undefined" && readStatus() === "adult";

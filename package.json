@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test:rules": "firebase emulators:exec --project motissimo-456ba --only firestore,storage \"node --test tests/rules.test.mjs\"",
     "build:android": "cross-env CAPACITOR_BUILD=1 next build",
-    "android:sync": "npm run build:android && cap sync android"
+    "android:sync": "npm run build:android && cap sync android",
+    "legal:sync": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/sync-legal.mjs",
+    "check:legal": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-legal.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
