@@ -4,9 +4,15 @@ import { useEffect } from "react";
 import { useAgeStatus } from "@/lib/promo/age-gate";
 import { isNativeApp } from "@/lib/platform";
 
-/** Identifiant de test fourni par Google : aucune vraie pub tant que NEXT_PUBLIC_ADMOB_BANNER_ID n'est pas défini. */
+/** Bloc bannière de test fourni par Google. */
 const TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
-const BANNER_ID = process.env.NEXT_PUBLIC_ADMOB_BANNER_ID || TEST_BANNER_ID;
+/** Bloc bannière AdMob de Motissimo. */
+const MOTISSIMO_BANNER_ID = "ca-app-pub-8288172940135426/2561074879";
+/** NEXT_PUBLIC_ADMOB_TEST=1 force les annonces de test pendant le développement. */
+const FORCE_TEST = process.env.NEXT_PUBLIC_ADMOB_TEST === "1";
+const BANNER_ID = FORCE_TEST
+  ? TEST_BANNER_ID
+  : process.env.NEXT_PUBLIC_ADMOB_BANNER_ID || MOTISSIMO_BANNER_ID || TEST_BANNER_ID;
 /** Écart (px) entre le bas du jeu et la bannière. */
 const BANNER_GAP = 8;
 

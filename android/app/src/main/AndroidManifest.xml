@@ -34,10 +34,10 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- ID d'application AdMob de TEST de Google. À remplacer par le vrai ID (~) avant la publication. -->
+        <!-- ID d'application AdMob de Motissimo. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-8288172940135426~6560029632" />
     </application>
 
     <!-- Permissions -->
