@@ -11,7 +11,9 @@
     "build:android": "cross-env CAPACITOR_BUILD=1 next build",
     "android:sync": "npm run build:android && cap sync android",
     "legal:sync": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/sync-legal.mjs",
-    "check:legal": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-legal.mjs"
+    "check:legal": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-legal.mjs",
+    "play:release": "node scripts/play-release.mjs",
+    "check:play": "node scripts/play-release.mjs --check-config"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

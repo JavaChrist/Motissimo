@@ -49,3 +49,7 @@ android/app/google-services.json
 # Firebase emulators
 firestore-debug.log
 *-debug.log
+
+# Clés de compte de service Google Play : toujours hors du dépôt (voir docs/play-release.md)
+*service-account*.json
+*-release-credentials*.json
