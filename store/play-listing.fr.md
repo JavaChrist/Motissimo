@@ -31,7 +31,7 @@ Des mots adaptés aux plus jeunes, la lecture à voix haute de chaque mot et l'a
 📢 PUBLICITÉ
 Les joueurs majeurs voient une bannière discrète en bas de l'écran et, de temps en temps, une courte vidéo présentant une autre application JavaChrist à la fin d'un niveau. Les mineurs, et les joueurs dont l'âge n'est pas renseigné, ne voient aucune publicité.
 
-Motissimo est édité par JavaChrist. Une question, une idée de mot ? Écris-nous : contact@javachrist.fr
+Motissimo est édité par JavaChrist. Une question, une idée de mot ? Écris-nous : support@javachrist.fr
 
 ## Notes de version (500 caractères max)
 Version 1.0 : première version de Motissimo sur Android.
@@ -42,10 +42,11 @@ Version 1.0 : première version de Motissimo sur Android.
 
 ## À renseigner dans Play Console (rappel)
 - Catégorie : Jeux > Mots
-- Adresse e-mail de contact : contact@javachrist.fr
+- Adresse e-mail de contact : support@javachrist.fr
 - Politique de confidentialité : https://motissimo.vercel.app/confidentialite (après redéploiement)
 - Public cible : 13 ans et plus (le mode enfant existe mais l'app n'est pas déclarée « Famille » tant que les pubs adultes sont présentes ; à revérifier avec la politique Families)
 - Annonces : oui (AdMob + vidéos promo propres)
-- ID de publicité : oui (permission AD_ID déclarée)
-- Sécurité des données : compte (ID Firebase, e-mail si Google), progression, identifiant publicitaire ; chiffrées en transit ; suppression sur demande à contact@javachrist.fr
+- ID de publicité : Non (permissions AD_ID et ADSERVICES retirées du manifeste depuis le versionCode 2)
+- Sécurité des données : compte (ID Firebase, e-mail si Google), progression ; côté publicité, données collectées par le SDK AdMob (adresse IP, App Set ID, appareil, interactions), sans identifiant publicitaire ; chiffrées en transit ; suppression sur demande à support@javachrist.fr
+- URL de suppression du compte : https://motissimo.vercel.app/supprimer-mon-compte (la page Mes données de l'application prépare aussi la demande)
 - Visuels à fournir : icône 512×512, image de présentation 1024×500, 2 à 8 captures d'écran (téléphone, et tablette recommandé)
