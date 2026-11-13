@@ -2,7 +2,7 @@
 
 # Vos droits sur les données — Motissimo
 
-Version 0.1.2 — 2026-11-13
+Version 0.2.0 — 2026-11-13
 
 ## Nous contacter
 
@@ -20,15 +20,15 @@ Responsable : Christian Grohens, 5 rue Maurice Fonvieille, 31120 Portet-sur-Garo
 
 ## Accès et export dans l’application
 
-Une copie des données de compte et de progression, ainsi que toute demande de portabilité, peut être demandée à support@javachrist.fr.
+La page Mes données du jeu résume les données enregistrées sur l'appareil et affiche l'identifiant du compte. Une copie des données de compte et de progression, ainsi que toute demande de portabilité, peut être demandée à support@javachrist.fr, en indiquant cet identifiant.
 
 ## Suppression
 
-La suppression du compte et de la progression enregistrée en ligne se demande à support@javachrist.fr, en indiquant si possible l'adresse e-mail du compte Google utilisé ; elle est réalisée sous 30 jours. Les données stockées sur l'appareil sont effacées en vidant les données du site ou de l'application, ou en désinstallant l'application. Ces effacements ne suppriment pas les données déjà transmises à Google pour la publicité. Les journaux techniques de l'hébergeur ne sont pas accessibles depuis le jeu : pour toute demande les concernant, écrivez à support@javachrist.fr.
+La page Mes données du jeu affiche les données enregistrées sur l'appareil et l'identifiant du compte. Le bouton « Effacer ces données » efface, après confirmation, la progression, les réglages, l'année de naissance et l'état des vidéos de promotion stockés sur l'appareil ; la progression enregistrée en ligne avec le compte n'est pas supprimée par cette action. Les données de l'appareil s'effacent aussi en vidant les données du site ou de l'application, ou en désinstallant l'application. La suppression du compte et de la progression enregistrée en ligne se demande à support@javachrist.fr, par exemple avec le bouton « Demander la suppression du compte » de la page Mes données, qui prépare un e-mail contenant l'identifiant du compte ; à défaut, indiquez l'adresse e-mail du compte Google utilisé. Elle est réalisée sous 30 jours. Ces effacements ne suppriment pas les données déjà transmises à Google pour la publicité. Les journaux techniques de l'hébergeur ne sont pas accessibles depuis le jeu : pour toute demande les concernant, écrivez à support@javachrist.fr.
 
 ## Préférences publicitaires
 
-Le site web n'affiche aucune publicité tierce. L'application Android affiche une bannière Google AdMob aux seuls joueurs majeurs. Pour un joueur majeur de l'Espace économique européen ou du Royaume-Uni, Google recueille son consentement par son formulaire (User Messaging Platform) avant la première annonce. Un joueur mineur ou sans réponse à la question d'âge ne reçoit aucune annonce : aucune demande n'est envoyée à Google. Effacer les données du jeu sur l'appareil ne supprime pas les données déjà transmises à Google. À la fin d'un niveau, le jeu peut aussi présenter en vidéo d'autres applications de l'éditeur, seulement à un joueur majeur ; ces vidéos sont fournies par l'éditeur et ne contiennent aucune publicité tierce.
+Le site web n'affiche aucune publicité tierce. L'application Android affiche une bannière Google AdMob aux seuls joueurs majeurs. Pour un joueur majeur de l'Espace économique européen ou du Royaume-Uni, Google recueille son consentement par son formulaire (User Messaging Platform) avant la première annonce ; lorsque Google l'exige, il peut modifier ce choix à tout moment depuis la page Mes données (« Modifier mes choix publicitaires »). Un joueur mineur ou sans réponse à la question d'âge ne reçoit aucune annonce : aucune demande n'est envoyée à Google. Effacer les données du jeu sur l'appareil ne supprime pas les données déjà transmises à Google et ne retire pas le consentement publicitaire, qui se modifie depuis le bouton de Google. À la fin d'un niveau, le jeu peut aussi présenter en vidéo d'autres applications de l'éditeur, seulement à un joueur majeur ; ces vidéos sont fournies par l'éditeur et ne contiennent aucune publicité tierce.
 
 ## Traitement de votre demande
 
