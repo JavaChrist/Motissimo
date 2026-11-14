@@ -14,8 +14,9 @@ Le script `scripts/delete-account.mjs` utilise la session du CLI Firebase (`fire
 2. **Simuler** : `node scripts/delete-account.mjs <uid>`. Rien n'est supprimé. Le script affiche :
    - le type de compte et l'e-mail masqué ;
    - la présence de `users/{uid}` ;
-   - l'état d'une éventuelle marque de suppression.
-3. **Supprimer** : `node scripts/delete-account.mjs <uid> --confirm`. Chaque étape peut être rejouée :
+   - l'état d'une éventuelle marque de suppression ;
+   - les **comptes anonymes liés** : ceux dont la progression a été fusionnée dans ce compte Google (voir « Passage d'un compte anonyme vers Google »).
+3. **Supprimer** : `node scripts/delete-account.mjs <uid> --confirm`. Les comptes anonymes liés sont supprimés d'abord, avec les mêmes étapes (et leur propre marque). Chaque étape peut être rejouée :
    1. Le script pose la marque `deleted_accounts/{uid}` (uid et date de la demande). Les règles refusent alors toute lecture et toute écriture de `users/{uid}`, même avec un jeton encore valide (une heure au plus).
    2. Il supprime `users/{uid}`.
    3. Il supprime le compte Firebase Authentication. Un compte déjà absent compte comme supprimé.
@@ -35,6 +36,20 @@ Le script `scripts/delete-account.mjs` utilise la session du CLI Firebase (`fire
 
 Sans identifiant ni adresse Google, un compte anonyme ne peut pas être retrouvé : le dire dans la réponse.
 
+## Passage d'un compte anonyme vers Google
+
+Lors de la connexion Google depuis un compte anonyme U :
+
+- **Google n'a pas encore de compte Motissimo** : Google est lié à U. L'uid ne change pas, rien n'est copié.
+- **Google a déjà un compte G** : la progression de U est fusionnée dans `users/G`. U et `users/U` sont supprimés une fois la fusion confirmée par le serveur. L'application :
+  1. enregistre le transfert sur l'appareil (`wordtiles_account_transfer`), avec l'uid de G dès qu'il est connu ;
+  2. marque `users/U` avec `transferredTo: G`, puis écrit la fusion dans `users/G` avec `transferredFrom: [U, …]` ;
+  3. supprime `users/U`, puis le compte Auth U, depuis une seconde session Firebase qui garde U sur l'appareil.
+
+  En cas d'échec ou de coupure, tout est gardé et le transfert reprend au lancement suivant, seulement vers G.
+
+**Pour le support**, supprimer G supprime aussi les comptes anonymes liés, trouvés par `users/G.transferredFrom` ou par `users/U.transferredTo == G`, même si seul le compte Auth U reste. La simulation les affiche.
+
 ## Pourquoi 24 heures
 
 La marque contient l'uid, une donnée personnelle : elle ne vit que le temps utile.
@@ -45,6 +60,7 @@ La marque contient l'uid, une donnée personnelle : elle ne vit que le temps uti
 ## Limites connues
 
 - **Versions 1.0.1 et antérieures** (test interne uniquement) : relancées après une suppression, elles ont pu renvoyer leur copie locale sous un nouveau compte anonyme. Les versions suivantes rattachent la copie à son compte et l'effacent.
+- **Transfert interrompu, puis données de l'application effacées** : la seconde session est perdue, l'appareil ne peut plus supprimer U. U reste lié à G par `transferredTo` ou `transferredFrom`, et il est supprimé avec G sur demande.
 - **Pas d'effacement automatique** : sans politique TTL Firestore sur `expireAt` (à activer seulement avec un accord explicite), l'effacement dépend de l'étape 4.
 
 ## Tests
@@ -52,6 +68,7 @@ La marque contient l'uid, une donnée personnelle : elle ne vit que le temps uti
 - `npm run test:rules` : règles, dont le blocage par la marque.
 - `npm run test:delete` : reprise après un échec à chaque étape, et purge.
 - `npm run test:owner` : copie locale et changement de compte.
+- `npm run test:transfer` : fusion (meilleur temps d'une réussite valide, grilles vues sans doublon) et reprise du transfert après une panne à chaque étape.
 
 Les deux premiers lancent les émulateurs. Sous Windows, il faut un dossier temporaire court :
 

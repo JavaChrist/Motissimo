@@ -2,7 +2,7 @@
 
 # Conditions générales de vente — Motissimo
 
-Version 0.5.1 — 2026-11-14
+Version 0.5.2 — 2026-11-14
 
 
 

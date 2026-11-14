@@ -10,6 +10,7 @@
     "test:rules": "firebase emulators:exec --project motissimo-456ba --only firestore,storage \"node --test tests/rules.test.mjs\"",
     "test:delete": "firebase emulators:exec --project motissimo-456ba --only firestore,auth \"node --test tests/delete-account.test.mjs\"",
     "test:owner": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/progress-owner.test.mjs",
+    "test:transfer": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/account-transfer.test.mjs",
     "build:android": "cross-env CAPACITOR_BUILD=1 next build",
     "android:sync": "npm run build:android && cap sync android",
     "legal:sync": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/sync-legal.mjs",

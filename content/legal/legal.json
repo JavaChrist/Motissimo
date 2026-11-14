@@ -1,9 +1,9 @@
 {
   "appId": "motissimo",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "mode": "draft",
-  "generatedAt": "2026-11-14T16:22:13.974Z",
-  "configurationSha256": "08f68079a5e6e10c9e78968f5ad755d1025d18e00ae571b6f441cd41c3751f3d",
-  "kitCommit": "0865df3+modifications",
+  "generatedAt": "2026-11-14T18:29:28.195Z",
+  "configurationSha256": "212fa0842ef9621563bed82d2a1e1506d2461a52c5e7023092d64c925357e2a3",
+  "kitCommit": "6ed12aa+modifications",
   "pendingPoints": 0
 }

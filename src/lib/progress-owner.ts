@@ -81,9 +81,15 @@ export function discardLocalProgress() {
   write(PROGRESS_KEY, null);
 }
 
+/** Copie locale remplacée par `progress`, rattachée au compte `uid` (fusion d'un transfert de compte). */
+export function storeLocalCopy(uid: string, progress: unknown) {
+  write(PROGRESS_KEY, JSON.stringify(progress));
+  write(OWNER_KEY, uid);
+}
+
 /** Uid de la session Firebase enregistrée, lu avant l'initialisation (qui l'efface si le compte n'existe plus). */
-async function persistedUid(apiKey: string): Promise<string | null> {
-  const key = `firebase:authUser:${apiKey}:[DEFAULT]`;
+export async function persistedUid(apiKey: string, appName = "[DEFAULT]"): Promise<string | null> {
+  const key = `firebase:authUser:${apiKey}:${appName}`;
   const fromIndexedDb = await new Promise<string | null>((resolve) => {
     try {
       const request = indexedDB.open("firebaseLocalStorageDb", 1);

@@ -9,6 +9,7 @@ import { getFirebaseAuthReady, isFirebaseConfigured } from "@/lib/firebase";
 import { isNativeApp } from "@/lib/platform";
 import { clearBirthYear, useAgeStatus } from "@/lib/promo/age-gate";
 import { OWNER_KEY, PROGRESS_KEY } from "@/lib/progress-owner";
+import { localTransferStore } from "@/lib/account-transfer";
 
 const SUPPORT = "support@javachrist.fr";
 const BIRTH_YEAR_KEY = "promo_birth_year";
@@ -29,6 +30,7 @@ interface DeviceData {
   birthYear: string | null;
   owner: boolean;
   updateKeys: number;
+  transfer: boolean;
 }
 
 function storageKeys(): string[] {
@@ -51,6 +53,7 @@ function readDeviceData(): DeviceData | null {
       birthYear: localStorage.getItem(BIRTH_YEAR_KEY),
       owner: localStorage.getItem(OWNER_KEY) !== null,
       updateKeys: keys.filter((key) => key.startsWith(UPDATE_PREFIX)).length,
+      transfer: localTransferStore.load() !== null,
     };
   } catch {
     return null;
@@ -63,7 +66,7 @@ const noSubscription = () => () => {};
 
 function isEmpty(data: DeviceData | null): boolean {
   if (!data) return true;
-  return !data.completedLevels && !data.totalScore && !data.settings && !data.birthYear && !data.owner && !data.updateKeys;
+  return !data.completedLevels && !data.totalScore && !data.settings && !data.birthYear && !data.owner && !data.updateKeys && !data.transfer;
 }
 
 /** Compte Firebase actuel, sans en créer : cette page ne connecte personne. */
@@ -154,6 +157,8 @@ function DeviceSummary({ data }: { data: DeviceData | null }) {
     data.birthYear && `Année de naissance : ${data.birthYear}`,
     data.owner && "L'identifiant du compte auquel appartient cette progression",
     data.updateKeys > 0 && "L'état des mises à jour de l'application",
+    data.transfer &&
+      "Un passage vers votre compte Google à terminer : les identifiants des deux comptes, pour supprimer l'ancien compte anonyme au prochain lancement avec une connexion",
   ].filter((item): item is string => Boolean(item));
   return (
     <ul className="flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
@@ -190,6 +195,10 @@ export function MyData() {
         } catch {}
       }
     }
+    // Passage vers un compte Google inachevé : la copie de la progression est effacée, mais les deux
+    // identifiants restent, sans quoi l'ancien compte anonyme ne pourrait plus être supprimé.
+    const transfer = localTransferStore.load();
+    if (transfer?.anonLocal) localTransferStore.save({ ...transfer, anonLocal: null });
     // Rechargement complet voulu (pas router.push) : l'état du jeu gardé en mémoire repart de zéro.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign("/");

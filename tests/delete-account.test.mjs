@@ -99,6 +99,49 @@ describe("scripts/delete-account.mjs", () => {
     assert.match(result.out, /Suppression déjà terminée/);
   });
 
+  it("supprime aussi les comptes anonymes fusionnés dans le compte, même sans leur progression", async () => {
+    const google = await newPlayer();
+    const withDoc = await newPlayer(); // fusion faite, users/U pas encore supprimé
+    const authOnly = await newPlayer(); // coupure après la suppression de users/U, avant celle du compte U
+    const other = await newPlayer(); // sans lien
+    assert.equal(
+      (await asPlayer(google, `users/${google.uid}`, {
+        method: "PATCH",
+        body: JSON.stringify({ fields: { totalScore: { integerValue: "300" }, transferredFrom: { arrayValue: { values: [{ stringValue: withDoc.uid }, { stringValue: authOnly.uid }] } } } }),
+      })).status,
+      200
+    );
+    assert.equal(
+      (await asPlayer(withDoc, `users/${withDoc.uid}`, {
+        method: "PATCH",
+        body: JSON.stringify({ fields: { totalScore: { integerValue: "40" }, transferredTo: { stringValue: google.uid } } }),
+      })).status,
+      200
+    );
+    assert.equal((await writeProgress(other, 5)).status, 200);
+
+    let result = run([google.uid]);
+    assert.equal(result.code, 0, result.out);
+    assert.match(result.out, new RegExp(`Compte anonyme lié ${withDoc.uid} : compte Auth et users/${withDoc.uid}`));
+    assert.match(result.out, new RegExp(`Compte anonyme lié ${authOnly.uid} : compte Auth,`));
+    assert.doesNotMatch(result.out, new RegExp(other.uid));
+
+    // Panne pendant le premier compte lié : la relance retrouve les deux par users/G.
+    result = run([google.uid, "--confirm"], "progress");
+    assert.notEqual(result.code, 0);
+    result = run([google.uid, "--confirm"]);
+    assert.equal(result.code, 0, result.out);
+    for (const player of [google, withDoc, authOnly]) {
+      assert.ok(!(await authExists(player.uid)), `compte ${player.uid} supprimé`);
+      assert.ok(!(await exists(`users/${player.uid}`)), `users/${player.uid} supprimé`);
+      const marker = await (await adminGet(`deleted_accounts/${player.uid}`)).json();
+      assert.ok(marker.fields?.expireAt, `marque datée pour ${player.uid}`);
+    }
+    assert.ok(await authExists(other.uid), "compte sans lien gardé");
+    assert.ok(await exists(`users/${other.uid}`));
+    assert.match(run([google.uid, "--confirm"]).out, /Suppression déjà terminée/);
+  });
+
   it("n'efface que les marques terminées et expirées", async () => {
     const past = new Date(Date.now() - 1000).toISOString();
     const put = (uid, fields) => fetch(`${DOCS}/deleted_accounts/${uid}`, { method: "PATCH", headers: owner, body: JSON.stringify({ fields }) });

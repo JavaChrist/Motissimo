@@ -2,4 +2,5 @@ Version 1.0.2
 • Suppression du compte plus sûre : la progression de l'appareil est effacée et n'est jamais renvoyée en ligne
 • Vidéos de promotion : plus rien n'est enregistré sur l'appareil
 • Page Mes données : affiche le compte auquel appartient la progression
-• Textes juridiques mis à jour (version 0.5.1)
+• Connexion Google : la progression du compte anonyme est conservée, et fusionnée si le compte Google existe déjà
+• Textes juridiques mis à jour (version 0.5.2)

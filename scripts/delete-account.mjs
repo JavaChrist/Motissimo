@@ -15,6 +15,8 @@
  *   3. supprimer le compte Firebase Authentication : son jeton ne peut plus être renouvelé ;
  *   4. vérifier que le document et le compte n'existent plus ;
  *   5. dater la marque : terminée, à effacer 24 heures plus tard.
+ * Comptes anonymes liés : un compte anonyme dont la progression a été fusionnée dans ce compte Google
+ * (users/{G}.transferredFrom, ou users/{U}.transferredTo == G) est supprimé d'abord, avec les mêmes étapes.
  * Après un échec, relancer la même commande : elle reprend là où elle s'est arrêtée. Tant que la
  * suppression n'est pas terminée, la marque reste et bloque l'accès.
  *
@@ -194,6 +196,41 @@ async function deleteAccount(token, uid) {
   console.log(`OK 5/5 suppression terminée. Marque à effacer après le ${expire.toISOString()} : relancez node scripts/delete-account.mjs --purge --confirm une fois cette heure passée`);
 }
 
+const UID = /^[A-Za-z0-9]{1,128}$/;
+
+/** Comptes anonymes fusionnés dans `uid` : transferredFrom de users/{uid}, et users/{U} avec transferredTo == uid. */
+async function linkedAnonymous(token, uid, progress) {
+  const ids = new Set();
+  for (const value of progress?.fields?.transferredFrom?.arrayValue?.values ?? []) {
+    if (typeof value.stringValue === "string" && UID.test(value.stringValue)) ids.add(value.stringValue);
+  }
+  const query = await call(token, `${FIRESTORE}:runQuery`, {
+    method: "POST",
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: "users" }],
+        where: { fieldFilter: { field: { fieldPath: "transferredTo" }, op: "EQUAL", value: { stringValue: uid } } },
+      },
+    }),
+  });
+  if (!query.ok) fail(`recherche des comptes anonymes liés refusée (${query.status})`);
+  for (const row of query.body ?? []) {
+    const id = row.document?.name?.split("/").pop();
+    if (id && UID.test(id)) ids.add(id);
+  }
+  ids.delete(uid);
+  return [...ids].sort();
+}
+
+/** État d'un compte : ce qui reste en ligne, et sa marque. */
+async function accountState(token, uid) {
+  const [user] = await lookup(token, { localId: [uid] });
+  const progress = await readDoc(token, `users/${uid}`);
+  const marker = await readDoc(token, `${MARKERS}/${uid}`);
+  const remaining = Boolean(user || progress || (marker && !fieldTime(marker, "expireAt")));
+  return { user: user ?? null, progress, marker, remaining };
+}
+
 async function listMarkers(token) {
   const markers = [];
   let pageToken = "";
@@ -266,8 +303,16 @@ async function main() {
   console.log(`  Firestore users/${uid} : ${progress ? `présent, mis à jour le ${progress.updateTime}` : "absent"}`);
   console.log(`  Marque de suppression : ${describeMarker(marker)}`);
 
+  const linked = [];
+  for (const id of await linkedAnonymous(token, uid, progress)) linked.push({ uid: id, ...(await accountState(token, id)) });
+  for (const account of linked) {
+    const what = [account.user && "compte Auth", account.progress && `users/${account.uid}`].filter(Boolean).join(" et ") || "plus rien en ligne";
+    console.log(`  Compte anonyme lié ${account.uid} : ${what}, marque ${describeMarker(account.marker)}`);
+  }
+  const linkedLeft = linked.filter((account) => account.remaining);
+
   const complete = marker && fieldTime(marker, "expireAt");
-  if (!user && !progress && (!marker || complete)) {
+  if (!user && !progress && (!marker || complete) && !linkedLeft.length) {
     console.log(marker ? "Suppression déjà terminée." : "Rien à supprimer.");
     return;
   }
@@ -276,6 +321,14 @@ async function main() {
     return;
   }
 
+  // Les comptes anonymes liés d'abord : la liste transferredFrom de users/{uid} sert encore après une coupure.
+  for (const account of linkedLeft) {
+    console.log(`
+Compte anonyme lié ${account.uid} :`);
+    await deleteAccount(token, account.uid);
+  }
+  if (linkedLeft.length) console.log(`
+Compte ${uid} :`);
   await deleteAccount(token, uid);
   await purge(token, true);
   console.log("Répondre à la demande : suppression faite. Un appareil relancé efface sa copie locale ; les autres données de l'appareil s'effacent depuis Mes données.");

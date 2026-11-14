@@ -1,7 +1,14 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
-import { claimLegacyCopy } from "./progress-owner";
+import {
+  browserLocalPersistence,
+  connectAuthEmulator,
+  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+} from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
+import { claimLegacyCopy, persistedUid } from "./progress-owner";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "demo-key",
@@ -13,13 +20,22 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? "",
 };
 
+/** Émulateurs locaux (tests uniquement) : NEXT_PUBLIC_FIREBASE_EMULATORS=1 au moment du build ou de `next dev`. */
+const USE_EMULATORS = process.env.NEXT_PUBLIC_FIREBASE_EMULATORS === "1";
+
+function connectEmulators(auth: Auth | null, db: Firestore | null) {
+  if (!USE_EMULATORS) return;
+  if (auth) connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  if (db) connectFirestoreEmulator(db, "127.0.0.1", 8080);
+}
+
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 
 function getFirebaseApp() {
   if (!app) {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    app = getApps().find((a) => a.name === "[DEFAULT]") ?? initializeApp(firebaseConfig);
   }
   return app;
 }
@@ -27,6 +43,7 @@ function getFirebaseApp() {
 export function getFirebaseAuth() {
   if (!auth) {
     auth = getAuth(getFirebaseApp());
+    connectEmulators(auth, null);
   }
   return auth;
 }
@@ -43,10 +60,44 @@ export async function getFirebaseAuthReady(): Promise<Auth> {
 export function getFirebaseDb() {
   if (!db) {
     db = getFirestore(getFirebaseApp());
+    connectEmulators(null, db);
   }
   return db;
 }
 
 export function isFirebaseConfigured(): boolean {
   return firebaseConfig.apiKey !== "demo-key";
+}
+
+/**
+ * Seconde session Firebase, enregistrée sur l'appareil : elle garde le compte anonyme pendant un
+ * passage vers un compte Google qui existe déjà, jusqu'à la suppression de ce compte anonyme.
+ */
+export const TRANSFER_APP = "account-transfer";
+
+export interface TransferSession {
+  auth: Auth;
+  db: Firestore;
+  /** Uid de la session enregistrée avant l'initialisation (Firebase l'efface si le compte n'existe plus). */
+  persistedBefore: string | null;
+}
+
+let transfer: Promise<TransferSession> | null = null;
+
+export function getTransferSession(): Promise<TransferSession> {
+  transfer ??= (async () => {
+    const persistedBefore = await persistedUid(firebaseConfig.apiKey, TRANSFER_APP);
+    const app2 = getApps().find((a) => a.name === TRANSFER_APP) ?? initializeApp(firebaseConfig, TRANSFER_APP);
+    let auth2: Auth;
+    try {
+      auth2 = initializeAuth(app2, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] });
+    } catch {
+      auth2 = getAuth(app2);
+    }
+    const db2 = getFirestore(app2);
+    connectEmulators(auth2, db2);
+    await auth2.authStateReady();
+    return { auth: auth2, db: db2, persistedBefore };
+  })();
+  return transfer;
 }
