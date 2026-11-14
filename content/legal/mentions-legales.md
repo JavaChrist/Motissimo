@@ -2,7 +2,7 @@
 
 # Mentions légales — Motissimo
 
-Version 0.5.0 — 2026-11-14
+Version 0.5.1 — 2026-11-14
 
 ## Éditeur et contact
 

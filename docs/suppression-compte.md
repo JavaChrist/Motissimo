@@ -30,7 +30,7 @@ Le script `scripts/delete-account.mjs` utilise la session du CLI Firebase (`fire
    - sur un appareil encore utilisé, la copie locale de la progression est effacée au lancement suivant ;
    - les autres données de l'appareil s'effacent depuis Mes données, en vidant les données de l'application ou en la désinstallant ;
    - les données publicitaires relèvent de Google ;
-   - les requêtes visibles dans les Runtime Logs de Vercel y restent 1 jour (offre Pro, sans Observability Plus ni drain). Si cette configuration change, mettre à jour les textes légaux.
+   - les requêtes visibles dans les Runtime Logs de Vercel y restent 30 jours (offre Pro avec Observability Plus, aucun drain). Si motissimo est exclu d'Observability Plus (1 jour) ou si un drain est ajouté, mettre à jour les textes légaux.
 
 Sans identifiant ni adresse Google, un compte anonyme ne peut pas être retrouvé : le dire dans la réponse.
 

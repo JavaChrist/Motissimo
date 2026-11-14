@@ -86,7 +86,7 @@ export default function DeleteAccountPage() {
           </li>
           <li>
             Les journaux techniques de la version web chez l&apos;hébergeur Vercel : les requêtes visibles dans ses journaux
-            d&apos;exécution (Runtime Logs) y restent 1 jour. Vercel peut conserver d&apos;autres données techniques selon
+            d&apos;exécution (Runtime Logs) y restent 30 jours. Vercel peut conserver d&apos;autres données techniques selon
             ses propres règles.
           </li>
         </ul>
