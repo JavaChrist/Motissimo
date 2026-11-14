@@ -15,6 +15,7 @@ import {
   type GameState,
 } from "@/lib/game-engine";
 import { saveProgress, soundIsOn, type UserProgress } from "@/lib/firebase-db";
+import { withTotal } from "@/lib/score";
 import { LEVELS } from "@/lib/levels";
 import { todayKey, shiftDate } from "@/lib/daily";
 import { playBonus, playSuccess, playTap, playWrong, buzz } from "@/lib/sfx";
@@ -86,14 +87,15 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
       if (newState.isComplete && progress) {
         if (newState.mode === "daily") {
           const today = todayKey();
-          if (progress.dailyLastDate !== today) {
+          // Un défi par date : ses points ne comptent qu'une fois (dailyScores), même rejoué.
+          if (progress.dailyLastDate !== today && progress.dailyScores?.[today] === undefined) {
             const streak = progress.dailyLastDate === shiftDate(today, -1) ? (progress.dailyStreak ?? 0) + 1 : 1;
-            const updated: UserProgress = {
+            const updated = withTotal({
               ...progress,
-              totalScore: progress.totalScore + newState.score,
+              dailyScores: { ...progress.dailyScores, [today]: newState.score },
               dailyStreak: streak,
               dailyLastDate: today,
-            };
+            });
             saveProgress(uid, updated);
             setProgress(updated);
           }
@@ -102,7 +104,8 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
           const elapsed = Math.floor((Date.now() - newState.startTime) / 1000);
           const key = String(newState.levelId);
           const previous = progress.completedLevels[key];
-          const updated: UserProgress = {
+          // Total recalculé : un rejeu ne compte que s'il bat le meilleur score du niveau.
+          const updated = withTotal({
             ...progress,
             currentLevel: Math.max(
               progress.currentLevel ?? 1,
@@ -116,8 +119,7 @@ export function useGame(uid: string | null, progress: UserProgress | null, setPr
                 bestTime: previous ? Math.min(previous.bestTime, elapsed) : elapsed,
               },
             },
-            totalScore: progress.totalScore + newState.score,
-          };
+          });
           saveProgress(uid, updated);
           setProgress(updated);
         }

@@ -129,7 +129,7 @@ export function useAuth() {
         await continueTransfer();
         if (hasPendingTransfer()) throw new Error("Un transfert de compte précédent n'est pas terminé");
       }
-      localTransferStore.save(newTransferRecord(anonymous.uid, readLocalCopy(), transferId()));
+      localTransferStore.save(newTransferRecord(anonymous.uid, readLocalCopy(), transferId(), anonymous.refreshToken));
       holding.current = true;
       try {
         // La seconde session garde le compte anonyme, pour le supprimer une fois la fusion confirmée.

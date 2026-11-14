@@ -5,19 +5,21 @@
  * - Session principale : le compte Google G (lecture et écriture de users/G).
  * - Seconde session (getTransferSession) : le compte anonyme U, gardé jusqu'à sa suppression.
  *
- * « Compte supprimé » n'est retenu que sur une réponse de Firebase qui le dit (compte introuvable,
- * session invalidée). Une erreur réseau, un refus d'accès ou une session absente est une erreur :
- * le transfert est gardé et repris au lancement suivant.
+ * « Compte supprimé » n'est retenu que sur une réponse de Firebase qui le prouve : le renouvellement de la
+ * session de U, avec son jeton enregistré, répond USER_NOT_FOUND (refreshProvesDeletion). Le code du SDK
+ * `auth/user-token-expired` ne suffit pas : une session expirée ou révoquée le donne aussi, compte existant.
+ * Une erreur réseau, un refus d'accès, une session révoquée ou absente est une erreur : le transfert est
+ * gardé (nettoyage en attente) et repris au lancement suivant.
  */
 import { deleteUser, signOut, type User } from "firebase/auth";
 import { deleteDoc, doc, getDocFromServer, serverTimestamp, setDoc } from "firebase/firestore";
 import type { UserProgress } from "./firebase-db";
-import { getFirebaseAuth, getFirebaseDb, getTransferSession } from "./firebase";
+import { getFirebaseAuth, getFirebaseDb, getTransferSession, secureTokenEndpoint } from "./firebase";
 import { storeLocalCopy } from "./progress-owner";
 import {
   AnonymousAccountGone,
-  isAccountGoneError,
   localTransferStore,
+  refreshProvesDeletion,
   runTransfer,
   type TargetProgress,
   type TransferOps,
@@ -43,12 +45,42 @@ function withTimeout<T>(promise: Promise<T>, what: string): Promise<T> {
   });
 }
 
-/** Erreur d'un appel Auth : « supprimé » seulement si Firebase le dit. */
-function mapAuthError(error: unknown): never {
-  throw isAccountGoneError(error) ? new AnonymousAccountGone(error) : error;
+/** Erreurs du SDK où la session de U ne fonctionne plus : compte supprimé, ou session expirée, révoquée, désactivée. */
+const SESSION_ERRORS = new Set(["auth/user-token-expired", "auth/user-not-found", "auth/user-disabled", "auth/invalid-user-token"]);
+
+const codeOf = (error: unknown) => (error as { code?: string } | null)?.code ?? "";
+
+/**
+ * Renouvelle la session de U avec son jeton enregistré : vrai seulement si Firebase répond que le compte
+ * n'existe pas. Pas de jeton, réseau, session révoquée (TOKEN_EXPIRED), compte désactivé : faux.
+ */
+async function anonymousDeletionConfirmed(): Promise<boolean> {
+  const token = localTransferStore.load()?.anonRefreshToken;
+  if (!token) return false;
+  try {
+    const response = await withTimeout(
+      fetch(secureTokenEndpoint(), {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: token }).toString(),
+      }),
+      "Vérification du compte anonyme"
+    );
+    if (response.ok) return false;
+    const body = (await response.json().catch(() => null)) as { error?: { message?: unknown } } | null;
+    return refreshProvesDeletion(body?.error?.message);
+  } catch {
+    return false;
+  }
 }
 
-/** Session anonyme U de la seconde app, avec un jeton renouvelé (qui échoue si U n'existe plus). */
+/** Erreur d'un appel Auth sur U : « supprimé » seulement si Firebase le confirme, sinon l'erreur telle quelle. */
+async function mapAuthError(error: unknown): Promise<never> {
+  if (SESSION_ERRORS.has(codeOf(error)) && (await anonymousDeletionConfirmed())) throw new AnonymousAccountGone(error);
+  throw error;
+}
+
+/** Session anonyme U de la seconde app, avec un jeton renouvelé. */
 async function anonymousUser(anonUid: string): Promise<User> {
   const session = await getTransferSession();
   const user = session.auth.currentUser;
@@ -56,11 +88,10 @@ async function anonymousUser(anonUid: string): Promise<User> {
     await withTimeout(user.getIdToken(true), "Session anonyme").catch(mapAuthError);
     return user;
   }
-  // La session était enregistrée, et Firebase l'a effacée à l'initialisation : il ne le fait que si le
-  // compte n'existe plus ou est désactivé (une erreur réseau la garde). L'application ne désactive aucun compte.
-  if (!user && session.persistedBefore === anonUid) throw new AnonymousAccountGone();
-  // Session absente (données effacées) ou autre compte : on ne sait rien de U, ce n'est pas un nettoyage terminé.
-  throw Object.assign(new Error("Session anonyme introuvable sur l'appareil"), { code: "transfer/session-missing" });
+  // Session absente : Firebase l'efface quand elle ne fonctionne plus (compte supprimé, session révoquée…),
+  // ou les données de l'application ont été effacées. Seule la vérification par le jeton enregistré tranche.
+  if (!user && (await anonymousDeletionConfirmed())) throw new AnonymousAccountGone();
+  throw Object.assign(new Error("Session anonyme indisponible : nettoyage en attente"), { code: "transfer/session-missing" });
 }
 
 export function firebaseTransferOps(): TransferOps {

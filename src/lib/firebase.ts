@@ -8,7 +8,7 @@ import {
   type Auth,
 } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
-import { claimLegacyCopy, persistedUid } from "./progress-owner";
+import { claimLegacyCopy } from "./progress-owner";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "demo-key",
@@ -78,15 +78,18 @@ export const TRANSFER_APP = "account-transfer";
 export interface TransferSession {
   auth: Auth;
   db: Firestore;
-  /** Uid de la session enregistrée avant l'initialisation (Firebase l'efface si le compte n'existe plus). */
-  persistedBefore: string | null;
+}
+
+/** Point de renouvellement des sessions Firebase (securetoken), émulateur compris. */
+export function secureTokenEndpoint(): string {
+  const base = USE_EMULATORS ? "http://127.0.0.1:9099/securetoken.googleapis.com" : "https://securetoken.googleapis.com";
+  return `${base}/v1/token?key=${encodeURIComponent(firebaseConfig.apiKey)}`;
 }
 
 let transfer: Promise<TransferSession> | null = null;
 
 export function getTransferSession(): Promise<TransferSession> {
   transfer ??= (async () => {
-    const persistedBefore = await persistedUid(firebaseConfig.apiKey, TRANSFER_APP);
     const app2 = getApps().find((a) => a.name === TRANSFER_APP) ?? initializeApp(firebaseConfig, TRANSFER_APP);
     let auth2: Auth;
     try {
@@ -97,7 +100,7 @@ export function getTransferSession(): Promise<TransferSession> {
     const db2 = getFirestore(app2);
     connectEmulators(auth2, db2);
     await auth2.authStateReady();
-    return { auth: auth2, db: db2, persistedBefore };
+    return { auth: auth2, db: db2 };
   })();
   return transfer;
 }

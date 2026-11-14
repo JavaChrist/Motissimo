@@ -2,7 +2,7 @@
 
 # Conditions d’utilisation — Motissimo
 
-Version 0.5.2 — 2026-11-14
+Version 0.5.3 — 2026-11-14
 
 ## Service et éditeur
 
@@ -21,7 +21,7 @@ L'éditeur s'efforce de maintenir le jeu accessible, sans pouvoir le garantir en
 
 ## Compte
 
-Un compte anonyme est créé automatiquement au premier lancement pour sauvegarder la progression. L'utilisateur peut se connecter avec Google pour retrouver sa progression sur un autre appareil. Le compte Google est alors ajouté au compte anonyme, qui garde son identifiant et sa progression. Si ce compte Google a déjà son propre compte Motissimo, la progression du compte anonyme y est fusionnée (meilleur résultat valide de chaque niveau, grilles déjà jouées réunies sans doublon) ; une fois la fusion confirmée par le serveur, le compte anonyme et sa progression en ligne sont supprimés. En cas d'échec ou de coupure, la progression est gardée et le passage reprend au lancement suivant avec une connexion. Aucun mot de passe n'est créé chez l'éditeur.
+Un compte anonyme est créé automatiquement au premier lancement pour sauvegarder la progression. L'utilisateur peut se connecter avec Google pour retrouver sa progression sur un autre appareil. Le compte Google est alors ajouté au compte anonyme, qui garde son identifiant et sa progression. Si ce compte Google a déjà son propre compte Motissimo, la progression du compte anonyme y est fusionnée (meilleur résultat valide de chaque niveau, grilles déjà jouées réunies sans doublon, points du défi du jour comptés une fois par date ; le score total est recalculé à partir de ces résultats, sans additionner les deux totaux) ; une fois la fusion confirmée par le serveur, le compte anonyme et sa progression en ligne sont supprimés. En cas d'échec ou de coupure, la progression est gardée et le passage reprend au lancement suivant avec une connexion. Le compte anonyme n'est considéré comme supprimé qu'une fois sa suppression confirmée par Firebase : si sa session a expiré ou a été révoquée, sa suppression reste en attente sur l'appareil, et le support peut le supprimer sur demande. Aucun mot de passe n'est créé chez l'éditeur.
 
 ## Usage du service
 

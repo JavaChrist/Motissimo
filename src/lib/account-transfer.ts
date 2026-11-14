@@ -12,31 +12,22 @@
  *    users/G et relue depuis le serveur. Rien n'est supprimé avant cette confirmation.
  * 3. cleanup : suppression de users/U, puis du compte Auth U, par la seconde session.
  *
- * Une erreur (réseau, droits, session) n'est jamais prise pour un nettoyage terminé : seul un compte
- * anonyme réellement supprimé (AnonymousAccountGone) termine le transfert sans l'avoir fait soi-même.
+ * Une erreur (réseau, droits, session expirée ou révoquée) n'est jamais prise pour un nettoyage terminé :
+ * seule une suppression confirmée (la nôtre, ou AnonymousAccountGone, levée quand Firebase répond que le
+ * compte n'existe pas) termine le transfert. Sinon le nettoyage reste en attente et est repris.
  *
- * Aucune importation à l'exécution : ce module est testé tel quel par Node (tests/account-transfer.test.mjs).
+ * Seule importation à l'exécution : score.ts, sans dépendance (testé tel quel par Node, tests/account-transfer.test.mjs).
  */
 import type { UserProgress } from "./firebase-db";
+import { computeTotal, isValidResult, mergeDailyScores } from "./score.ts";
+
+export { isValidResult };
 
 // ---------------------------------------------------------------------------
 // Fusion de deux progressions
 // ---------------------------------------------------------------------------
 
-type LevelResult = UserProgress["completedLevels"][string];
-
 const finite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
-
-/** Réussite valide : 1 à 3 étoiles, score et temps finis et positifs (le jeu n'enregistre un niveau qu'une fois réussi). */
-export function isValidResult(result: unknown): result is LevelResult {
-  const r = result as Partial<LevelResult> | null;
-  return (
-    !!r &&
-    finite(r.stars) && r.stars >= 1 && r.stars <= 3 &&
-    finite(r.score) && r.score >= 0 &&
-    finite(r.bestTime) && r.bestTime >= 0
-  );
-}
 
 /** Par niveau : meilleures étoiles, meilleur score et meilleur temps, pris parmi les seules réussites valides. */
 function mergeLevels(...sources: (UserProgress["completedLevels"] | undefined)[]): UserProgress["completedLevels"] {
@@ -76,7 +67,6 @@ function mergeDaily(a: UserProgress | null, b: UserProgress | null): Pick<UserPr
   return { dailyLastDate: candidates[0].dailyLastDate, dailyStreak: candidates[0].dailyStreak ?? 0 };
 }
 
-const total = (p: UserProgress | null) => (finite(p?.totalScore) && (p?.totalScore ?? 0) >= 0 ? (p?.totalScore as number) : 0);
 const level = (p: UserProgress | null) => (finite(p?.currentLevel) && (p?.currentLevel ?? 0) >= 1 ? (p?.currentLevel as number) : 1);
 
 /** Réglages : ceux de `preferred` quand ils existent, sinon ceux de l'autre. */
@@ -89,32 +79,38 @@ function settings(preferred: UserProgress | null, other: UserProgress | null) {
   return out;
 }
 
-function combine(a: UserProgress | null, b: UserProgress | null, totalScore: number): UserProgress {
+/**
+ * Fusion de deux progressions. Le score total n'est jamais la somme des deux totaux : il est recalculé
+ * (score.ts) à partir des niveaux fusionnés (meilleur score de chaque niveau) et des points du défi du
+ * jour par date (une date jouée sur les deux ne compte qu'une fois, avec le meilleur score).
+ * Les réglages de `a` l'emportent quand ils existent.
+ */
+function combine(a: UserProgress | null, b: UserProgress | null): UserProgress {
+  const completedLevels = mergeLevels(a?.completedLevels, b?.completedLevels);
+  const dailyScores = mergeDailyScores(a?.dailyScores, b?.dailyScores);
   return {
-    completedLevels: mergeLevels(a?.completedLevels, b?.completedLevels),
-    totalScore,
+    completedLevels,
+    totalScore: computeTotal({ completedLevels, dailyScores }),
     currentLevel: Math.max(level(a), level(b)),
     seenPuzzleIds: mergeSeen(a?.seenPuzzleIds, b?.seenPuzzleIds),
+    ...(Object.keys(dailyScores).length > 0 ? { dailyScores } : {}),
     ...mergeDaily(a, b),
     ...settings(a, b),
   };
 }
 
-/**
- * Deux copies du même compte (la copie de l'appareil et son document en ligne) : le score total est
- * un cumul, la copie la plus avancée le contient déjà.
- */
+/** Deux copies du même compte (la copie de l'appareil et son document en ligne). */
 export function mergeSameAccount(local: UserProgress | null, remote: UserProgress | null): UserProgress | null {
   if (!local && !remote) return null;
-  return combine(local, remote, Math.max(total(local), total(remote)));
+  return combine(local, remote);
 }
 
 /**
- * Progression d'un compte anonyme versée dans un compte Google existant : les cumuls s'additionnent.
+ * Progression d'un compte anonyme versée dans un compte Google existant.
  * Les réglages de l'appareil (compte anonyme) l'emportent, ce sont ceux que le joueur utilise.
  */
 export function mergeAccounts(anonymous: UserProgress | null, google: UserProgress | null): UserProgress {
-  return combine(anonymous, google, total(anonymous) + total(google));
+  return combine(anonymous, google);
 }
 
 // ---------------------------------------------------------------------------
@@ -135,9 +131,11 @@ export interface TransferRecord {
   step: TransferStep;
   /** Copie locale de U au départ ; effacée une fois la fusion confirmée. */
   anonLocal: UserProgress | null;
+  /** Jeton de renouvellement de U : seul moyen de vérifier que U est supprimé quand sa session ne fonctionne plus. */
+  anonRefreshToken?: string | null;
 }
 
-/** Le compte anonyme n'existe plus : Firebase répond que le compte est introuvable ou sa session invalidée. */
+/** Le compte anonyme n'existe plus, confirmé par Firebase (refreshProvesDeletion). */
 export class AnonymousAccountGone extends Error {
   constructor(cause?: unknown) {
     super("Compte anonyme supprimé");
@@ -145,11 +143,14 @@ export class AnonymousAccountGone extends Error {
   }
 }
 
-/** Codes Firebase Auth qui signifient « compte supprimé » (USER_NOT_FOUND est renvoyé en user-token-expired au renouvellement). */
-const GONE_CODES = new Set(["auth/user-not-found", "auth/user-token-expired"]);
-
-export function isAccountGoneError(error: unknown): boolean {
-  return GONE_CODES.has((error as { code?: string } | null)?.code ?? "");
+/**
+ * Réponse d'erreur du renouvellement de session (securetoken, `error.message`) qui prouve la suppression
+ * du compte : USER_NOT_FOUND seulement. Le SDK, lui, rapporte aussi bien un compte supprimé qu'une session
+ * expirée ou révoquée en `auth/user-token-expired` : ce code ne prouve rien. TOKEN_EXPIRED (session
+ * révoquée), USER_DISABLED, INVALID_REFRESH_TOKEN ou une erreur réseau laissent le nettoyage en attente.
+ */
+export function refreshProvesDeletion(message: unknown): boolean {
+  return typeof message === "string" && /^USER_NOT_FOUND(?![A-Z_])/.test(message);
 }
 
 /**
@@ -261,8 +262,9 @@ export async function runTransfer(ops: TransferOps, store: TransferStore): Promi
         await ops.deleteAnonymousDoc(record.anonUid);
         await ops.deleteAnonymousAuth(record.anonUid);
       } catch (error) {
+        // Session expirée ou révoquée, réseau, droits : le nettoyage reste en attente (enregistrement gardé).
         if (!(error instanceof AnonymousAccountGone)) throw error;
-        // Déjà supprimé (par nous avant une coupure, ou par le support) : plus rien à nettoyer.
+        // Suppression confirmée par Firebase (par nous avant une coupure, ou par le support) : plus rien à nettoyer.
       }
       store.save(null);
       return "done";
@@ -282,8 +284,8 @@ export function recordTarget(store: TransferStore, uid: string | null) {
   }
 }
 
-export function newTransferRecord(anonUid: string, anonLocal: UserProgress | null, id: string): TransferRecord {
-  return { v: 1, id, anonUid, targetUid: null, step: "switching", anonLocal };
+export function newTransferRecord(anonUid: string, anonLocal: UserProgress | null, id: string, anonRefreshToken: string | null = null): TransferRecord {
+  return { v: 1, id, anonUid, targetUid: null, step: "switching", anonLocal, anonRefreshToken };
 }
 
 /** Enregistrement sur l'appareil (localStorage). */

@@ -1,17 +1,18 @@
-// Passage anonyme → Google (src/lib/account-transfer.ts) : node --test tests/account-transfer.test.mjs
+// Passage anonyme → Google (src/lib/account-transfer.ts) et score total (src/lib/score.ts) : node --test tests/account-transfer.test.mjs
 // Un faux serveur en mémoire tient les comptes et les documents ; chaque opération peut échouer sur demande.
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   AnonymousAccountGone,
-  isAccountGoneError,
   isValidResult,
   mergeAccounts,
   mergeSameAccount,
   newTransferRecord,
   recordTarget,
+  refreshProvesDeletion,
   runTransfer,
 } from "../src/lib/account-transfer.ts";
+import { computeTotal, mergeDailyScores, withTotal } from "../src/lib/score.ts";
 
 const U = "anon-U";
 const G = "google-G";
@@ -24,6 +25,7 @@ function progress(totalScore, levels = {}, seen = [], extra = {}) {
 function world({ anonDoc = progress(50, { 1: { stars: 2, score: 50, bestTime: 30 } }, ["a", "b"]), googleDoc = progress(200, { 1: { stars: 3, score: 40, bestTime: 12 }, 2: { stars: 1, score: 160, bestTime: 80 } }, ["b", "c"]) } = {}) {
   const w = {
     auth: new Set([U, G]),
+    revoked: new Set(), // sessions révoquées : le compte existe, mais sa session ne fonctionne plus
     docs: new Map([[U, anonDoc], [G, googleDoc]]),
     current: G,
     local: null,
@@ -39,8 +41,12 @@ function world({ anonDoc = progress(50, { 1: { stars: 2, score: 50, bestTime: 30
       throw error;
     }
   };
+  // Comme account-transfer-firebase.ts : « supprimé » seulement s'il est confirmé (USER_NOT_FOUND) ;
+  // une session révoquée donne l'erreur du SDK, auth/user-token-expired, qui ne prouve rien.
+  const sessionExpired = () => Object.assign(new Error("session expirée"), { code: "auth/user-token-expired" });
   const anonymousSession = () => {
     if (!w.auth.has(U)) throw new AnonymousAccountGone();
+    if (w.revoked.has(U)) throw sessionExpired();
   };
   w.ops = {
     currentUid: () => w.current,
@@ -73,7 +79,7 @@ function world({ anonDoc = progress(50, { 1: { stars: 2, score: 50, bestTime: 30
     },
     async deleteAnonymousAuth(uid) {
       maybeFail("deleteAnonymousAuth");
-      if (!w.auth.has(uid)) throw new AnonymousAccountGone();
+      anonymousSession();
       w.auth.delete(uid);
     },
     async releaseAnonymous() {
@@ -96,6 +102,26 @@ function world({ anonDoc = progress(50, { 1: { stars: 2, score: 50, bestTime: 30
 
 const networkError = () => Object.assign(new Error("offline"), { code: "unavailable" });
 
+describe("score total", () => {
+  it("meilleur score de chaque niveau réussi, plus le défi du jour une fois par date", () => {
+    const p = progress(9999, { 1: { stars: 3, score: 40, bestTime: 9 }, 2: { stars: 1, score: 15, bestTime: 30 }, 3: { stars: 0, score: 99, bestTime: 1 } }, [], {
+      dailyScores: { "2026-11-12": 30, "2026-11-13": 25, "pas-une-date": 500, "2026-11-14": -3 },
+    });
+    assert.equal(computeTotal(p), 40 + 15 + 30 + 25, "ancien total cumulé (rejeux) ignoré, entrées invalides ignorées");
+    assert.equal(withTotal(p).totalScore, 110);
+    assert.equal(withTotal(p).completedLevels, p.completedLevels);
+    assert.equal(computeTotal(null), 0);
+  });
+
+  it("même défi (même date) sur deux sources : compté une fois, avec le meilleur score", () => {
+    assert.deepEqual(mergeDailyScores({ "2026-11-12": 30, "2026-11-13": 10 }, { "2026-11-13": 25, "2026-11-14": 5 }, undefined), {
+      "2026-11-12": 30,
+      "2026-11-13": 25,
+      "2026-11-14": 5,
+    });
+  });
+});
+
 describe("fusion", () => {
   it("réussites valides seulement, meilleur temps d'une réussite valide", () => {
     assert.equal(isValidResult({ stars: 3, score: 10, bestTime: 4 }), true);
@@ -113,29 +139,50 @@ describe("fusion", () => {
     assert.equal(merged.completedLevels[3], undefined, "réussite invalide ignorée");
   });
 
-  it("grilles vues réunies sans doublon, cumuls additionnés entre comptes, maximum pour un même compte", () => {
+  it("grilles vues réunies sans doublon, série du dernier jour joué, réglages de l'appareil", () => {
     const a = progress(50, {}, ["x", "y", "x"], { dailyLastDate: "2026-11-10", dailyStreak: 4, soundEnabled: false });
     const b = progress(70, {}, ["y", "z"], { dailyLastDate: "2026-11-12", dailyStreak: 1, soundEnabled: true, childMode: true });
     const merged = mergeAccounts(a, b);
     assert.deepEqual(merged.seenPuzzleIds, ["x", "y", "z"]);
-    assert.equal(merged.totalScore, 120);
     assert.equal(merged.dailyLastDate, "2026-11-12");
     assert.equal(merged.dailyStreak, 1);
     assert.equal(merged.soundEnabled, false, "réglages de l'appareil");
     assert.equal(merged.childMode, true);
-    assert.equal(mergeSameAccount(a, b).totalScore, 70);
     assert.equal(mergeSameAccount(null, null), null);
     assert.equal(mergeAccounts(null, null).totalScore, 0);
   });
+
+  it("total recalculé, jamais la somme des deux totaux : un niveau et un défi joués sur les deux comptent une fois", () => {
+    const anon = progress(500, { 1: { stars: 2, score: 50, bestTime: 30 }, 2: { stars: 1, score: 20, bestTime: 60 } }, [], {
+      dailyScores: { "2026-11-12": 30, "2026-11-13": 10 },
+    });
+    const google = progress(800, { 1: { stars: 3, score: 45, bestTime: 12 }, 3: { stars: 2, score: 70, bestTime: 40 } }, [], {
+      dailyScores: { "2026-11-13": 25 },
+    });
+    const merged = mergeAccounts(anon, google);
+    // Niveaux : 1 → 50 (meilleur des deux), 2 → 20, 3 → 70. Défis : 12/11 → 30, 13/11 → 25 (même défi, meilleur score).
+    assert.equal(merged.totalScore, 50 + 20 + 70 + 30 + 25);
+    assert.notEqual(merged.totalScore, 500 + 800);
+    assert.deepEqual(merged.dailyScores, { "2026-11-12": 30, "2026-11-13": 25 });
+    assert.equal(mergeSameAccount(anon, google).totalScore, merged.totalScore, "même règle pour deux copies d'un compte");
+    // Fusionner deux fois le même compte ne change rien.
+    assert.equal(mergeAccounts(merged, google).totalScore, merged.totalScore);
+  });
 });
 
-describe("erreurs de compte", () => {
-  it("seuls « introuvable » et « session invalidée » signifient un compte supprimé", () => {
-    assert.equal(isAccountGoneError({ code: "auth/user-not-found" }), true);
-    assert.equal(isAccountGoneError({ code: "auth/user-token-expired" }), true);
-    for (const code of ["auth/network-request-failed", "auth/user-disabled", "auth/internal-error", "auth/too-many-requests", "permission-denied", "unavailable", undefined]) {
-      assert.equal(isAccountGoneError({ code }), false, String(code));
+describe("preuve de suppression", () => {
+  it("seule la réponse USER_NOT_FOUND du renouvellement de session prouve la suppression", () => {
+    assert.equal(refreshProvesDeletion("USER_NOT_FOUND"), true);
+    assert.equal(refreshProvesDeletion("USER_NOT_FOUND : no user record"), true);
+    // Session expirée ou révoquée (le compte existe), compte désactivé, jeton refusé, code du SDK : pas une preuve.
+    for (const message of ["TOKEN_EXPIRED", "USER_DISABLED", "INVALID_REFRESH_TOKEN", "auth/user-token-expired", "USER_NOT_FOUNDX", "", null, undefined, 404]) {
+      assert.equal(refreshProvesDeletion(message), false, String(message));
     }
+  });
+
+  it("le jeton de renouvellement de U est enregistré avec le transfert", () => {
+    assert.equal(newTransferRecord(U, null, "t", "refresh-U").anonRefreshToken, "refresh-U");
+    assert.equal(newTransferRecord(U, null, "t").anonRefreshToken, null);
   });
 });
 
@@ -145,7 +192,7 @@ describe("transfert", () => {
     w.start();
     assert.equal(await runTransfer(w.ops, w.store), "done");
     const g = w.docs.get(G);
-    assert.equal(g.totalScore, 260, "cumul local de U (60) + G (200)");
+    assert.equal(g.totalScore, 215, "recalculé : niveau 1 → 55 (meilleur de U et G), niveau 2 → 160 ; pas 60 + 200");
     assert.deepEqual(g.completedLevels[1], { stars: 3, score: 55, bestTime: 12 });
     assert.deepEqual(g.seenPuzzleIds, ["a", "d", "b", "c"]);
     assert.equal(g.lastTransferId, "t-1");
@@ -154,7 +201,7 @@ describe("transfert", () => {
     assert.equal(w.auth.has(U), false);
     assert.equal(w.record, null);
     assert.equal(w.local.owner, G);
-    assert.equal(w.local.progress.totalScore, 260);
+    assert.equal(w.local.progress.totalScore, 215);
     assert.equal(w.local.progress.lastTransferId, undefined);
     assert.equal(w.local.progress.transferredFrom, undefined);
     // Rien n'est supprimé avant la confirmation de la fusion.
@@ -176,7 +223,7 @@ describe("transfert", () => {
       }
       // Redémarrage complet : même enregistrement, même serveur.
       assert.equal(await runTransfer(w.ops, w.store), "done");
-      assert.equal(w.docs.get(G).totalScore, 260);
+      assert.equal(w.docs.get(G).totalScore, 215);
       assert.equal(w.docs.has(U), false);
       assert.equal(w.auth.has(U), false);
       assert.equal(w.record, null);
@@ -247,6 +294,34 @@ describe("transfert", () => {
     w.failures.set("markAnonymous", Object.assign(new Error("denied"), { code: "permission-denied" }));
     assert.equal(await runTransfer(w.ops, w.store), "failed");
     assert.notEqual(w.record, null);
+  });
+
+  it("session de U révoquée pendant le nettoyage (compte existant) : nettoyage en attente, pas terminé", async () => {
+    const w = world();
+    w.start();
+    w.failures.set("deleteAnonymousAuth", networkError());
+    assert.equal(await runTransfer(w.ops, w.store), "failed");
+    w.revoked.add(U); // auth/user-token-expired, mais le compte U existe encore
+    for (let launch = 0; launch < 3; launch++) {
+      assert.equal(await runTransfer(w.ops, w.store), "failed");
+      assert.equal(w.record?.step, "cleanup", "nettoyage gardé en attente");
+      assert.equal(w.auth.has(U), true, "compte U toujours présent");
+    }
+    // Le support supprime U : la suppression est alors confirmée, et le transfert se termine.
+    w.auth.delete(U);
+    assert.equal(await runTransfer(w.ops, w.store), "done");
+    assert.equal(w.record, null);
+  });
+
+  it("session de U révoquée avant la fusion : ni fusion ni « compte supprimé », tout est gardé", async () => {
+    const w = world();
+    w.start();
+    w.revoked.add(U);
+    assert.equal(await runTransfer(w.ops, w.store), "failed");
+    assert.equal(w.record.step, "merging");
+    assert.notEqual(w.record.anonLocal, null);
+    assert.equal(w.docs.get(G).lastTransferId, undefined);
+    assert.equal(w.docs.has(U), true);
   });
 
   it("compte U déjà supprimé pendant le nettoyage : terminé", async () => {

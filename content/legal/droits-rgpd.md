@@ -2,7 +2,7 @@
 
 # Vos droits sur les données — Motissimo
 
-Version 0.5.2 — 2026-11-14
+Version 0.5.3 — 2026-11-14
 
 ## Nous contacter
 
