@@ -2,12 +2,12 @@
 
 # Conditions d’utilisation — Motissimo
 
-Version 0.3.0 — 2026-11-14
+Version 0.4.0 — 2026-11-14
 
 ## Service et éditeur
 
 Motissimo est proposé par Christian Grohens. Jeu de mots mêlés en français : grilles par niveaux, défi du jour et mode Découverte. Disponible sur le web (motissimo.vercel.app) et en application Android. Le jeu est entièrement gratuit, sans achat. Le site web n'affiche aucune publicité tierce ; l'application Android affiche une bannière publicitaire Google AdMob aux seuls joueurs majeurs.
-Site : https://motissimo.vercel.app. Support : support@javachrist.fr. Les offres payantes, lorsqu’elles existent, relèvent également des CGV.
+Site : https://motissimo.vercel.app. Support : support@javachrist.fr.
 
 ## Accès et public
 

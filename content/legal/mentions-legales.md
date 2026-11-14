@@ -2,7 +2,7 @@
 
 # Mentions légales — Motissimo
 
-Version 0.3.0 — 2026-11-14
+Version 0.4.0 — 2026-11-14
 
 ## Éditeur et contact
 
@@ -16,8 +16,8 @@ Directeur de publication : Christian Grohens.
 
 Motissimo : https://motissimo.vercel.app.
 Jeu de mots mêlés en français : grilles par niveaux, défi du jour et mode Découverte. Disponible sur le web (motissimo.vercel.app) et en application Android. Le jeu est entièrement gratuit, sans achat. Le site web n'affiche aucune publicité tierce ; l'application Android affiche une bannière publicitaire Google AdMob aux seuls joueurs majeurs.
-Hébergeur : Vercel Inc., 440 N Barranca Avenue #4133, Covina, CA 91723, États-Unis, téléphone Vercel ne publie pas de numéro de support général. Contact juridique DMCA : +1 559 288 7060. Contact général : https://vercel.com/contact.
-Régions techniques utilisées : Site statique distribué via le CDN mondial Vercel, sans fonction serveur traitant de données personnelles..
+Hébergeur : Vercel Inc., 440 N Barranca Avenue #4133, Covina, CA 91723, États-Unis, téléphone non publié (contact : https://vercel.com/contact).
+Régions techniques utilisées : Site statique distribué via le CDN mondial Vercel, sans fonction serveur traitant de données personnelles.
 Support de l’application : support@javachrist.fr.
 
 ## Propriété intellectuelle

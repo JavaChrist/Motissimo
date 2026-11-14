@@ -32,10 +32,27 @@ export default function DeleteAccountPage() {
             </a>{" "}
             avec l&apos;objet « Motissimo : suppression de mon compte ».
           </li>
-          <li>Indiquez si possible l&apos;adresse e-mail du compte Google utilisé pour vous connecter.</li>
+          <li>
+            Indiquez de quoi retrouver le compte :
+            <ul className="mt-1 flex list-disc flex-col gap-1 pl-5">
+              <li>
+                <strong>Compte Google</strong> : l&apos;adresse e-mail du compte Google utilisé pour vous connecter.
+              </li>
+              <li>
+                <strong>Compte anonyme</strong> (sans connexion Google) : l&apos;identifiant du compte affiché dans la page
+                Mes données du jeu. Le bouton « Demander la suppression du compte » de cette page l&apos;ajoute
+                automatiquement à l&apos;e-mail.
+              </li>
+            </ul>
+          </li>
           <li>Ne transmettez jamais votre mot de passe.</li>
         </ol>
-        <p className="text-muted-foreground">La suppression est réalisée sous 30 jours.</p>
+        <p className="text-muted-foreground">
+          Un compte anonyme n&apos;est relié à aucun nom ni aucune adresse e-mail : sans son identifiant, il ne peut pas être
+          retrouvé. Si l&apos;application est déjà désinstallée et que l&apos;identifiant n&apos;a pas été noté, la
+          progression en ligne de ce compte ne peut donc pas être supprimée sur demande.
+        </p>
+        <p className="text-muted-foreground">La suppression est réalisée dans un délai d&apos;un mois.</p>
       </section>
 
       <section className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-5">
@@ -58,8 +75,7 @@ export default function DeleteAccountPage() {
             conservation.
           </li>
           <li>
-            Les journaux techniques de l&apos;hébergeur Vercel, conservés 1 jour, ou 30 jours au plus avec l&apos;option
-            d&apos;observabilité avancée.
+            Les journaux techniques de l&apos;hébergeur Vercel, conservés selon les règles de conservation de Vercel.
           </li>
         </ul>
       </section>

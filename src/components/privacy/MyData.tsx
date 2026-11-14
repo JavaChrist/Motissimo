@@ -229,7 +229,11 @@ export function MyData() {
 
       <section className={card}>
         <h2 className="text-lg font-bold">Effacer les données de cet appareil</h2>
-        <p className="text-muted-foreground">Le jeu repart de zéro et vous redemande votre année de naissance.</p>
+        <p className="text-muted-foreground">
+          Efface la progression, les réglages et l&apos;année de naissance enregistrés sur cet appareil, et vous redemande
+          votre année de naissance. Votre compte et la progression enregistrée en ligne ne sont pas supprimés : elle revient
+          au prochain lancement.
+        </p>
         <button
           type="button"
           disabled={isEmpty(data)}
@@ -244,7 +248,7 @@ export function MyData() {
       <section className={card}>
         <h2 className="text-lg font-bold">Supprimer le compte et la progression en ligne</h2>
         <p className="text-muted-foreground">
-          La demande part par e-mail à {SUPPORT}, avec l&apos;identifiant du compte. La suppression est réalisée sous 30 jours.
+          La demande part par e-mail à {SUPPORT}, avec l&apos;identifiant du compte. La suppression est réalisée dans un délai d&apos;un mois.
         </p>
         <a href={mailto} className={secondaryButton}>
           <Mail aria-hidden className="size-5" />
