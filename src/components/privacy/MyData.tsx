@@ -143,7 +143,7 @@ function DeviceSummary({ data }: { data: DeviceData | null }) {
   const items = [
     data.completedLevels > 0 && `${data.completedLevels} niveau${data.completedLevels > 1 ? "x" : ""} terminé${data.completedLevels > 1 ? "s" : ""}, score total ${data.totalScore}`,
     data.dailyStreak > 0 && `Série du défi du jour : ${data.dailyStreak} jour${data.dailyStreak > 1 ? "s" : ""}`,
-    data.settings && "Vos réglages : mode enfant, chiffres, sons",
+    data.settings && "Vos réglages : mode Découverte, chiffres, sons",
     data.birthYear && `Année de naissance : ${data.birthYear}`,
     data.promoShown && "La dernière vidéo de JavaChrist Promotions affichée",
     data.promoCatalogs > 0 && "La liste des vidéos de JavaChrist Promotions, gardée en cache",

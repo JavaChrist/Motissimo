@@ -2,6 +2,8 @@
 
 `scripts/play-release.mjs` vient de Géo Europe (commit `2306fe1`, `docs/play-release.md` de ce dépôt). Il envoie l'AAB signé de Motissimo sur la piste **test interne** de Google Play, avec l'API Google Play Developer v3. Il n'a aucune dépendance. Dans la copie, seuls changent l'emplacement de la configuration (`store/play-release.json`) et `--check-config`.
 
+Le script commun à toutes les applications vit maintenant dans le dépôt `JavaChrist-Play-Kit` (configuration `apps/motissimo.json`, lancement `npm run play:release -- --app motissimo` depuis le kit). La copie locale reste ici tant que le kit n'est pas validé ; ensuite, elle sera retirée et `store/play-release.json` aussi.
+
 Garde-fous, repris tels quels :
 
 - **Simulation par défaut** : contrôles locaux seulement, aucun appel réseau, rien n'est modifié dans la Play Console.
@@ -51,6 +53,13 @@ L'API refuse le premier envoi d'une application qui n'a encore aucune version : 
 Contrôles locaux : bundle lisible, package du manifeste, versionCode (égal à Gradle, plus grand que `lastUploadedVersionCode` et que le dernier envoi du script), signature (`jarsigner -verify`, un seul signataire, empreinte égale à `uploadCertSha256`), notes de version, identifiants (hors du dépôt, compte de service, jamais un compte « billing »).
 
 Rapport JSON hors du dépôt : `~/.geo-play/reports/fr.javachrist.motissimo/<date>-simulation.json` ou `-send.json`. Il ne contient ni clé ni jeton.
+
+## Avant chaque version
+
+- `public/app-ads.txt` doit être en ligne sur `https://motissimo.vercel.app/app-ads.txt` (déployé avec le site) : AdMob le lit à la racine du site déclaré dans la Play Console.
+- Les règles Firestore réservent l'écriture des grilles (`puzzles`) à l'administration. Depuis le versionCode 3, le client ne les écrit plus. Les anciennes versions qui tentaient d'en écrire échouent sans effet sur le jeu.
+- Vérifier l'AAB : aucune permission `AD_ID` ni `ADSERVICES` (`aapt2 dump badging` sur l'APK release, ou le manifeste du bundle).
+- Hors connexion : la fiche promet un jeu sans Internet dès le premier lancement. Le revérifier si le chargement des grilles change (test du 14/11/2026 : émulateur, Wi-Fi et données coupés par `adb shell svc wifi disable` et `svc data disable` ; le mode avion seul ne coupait pas le réseau de l'émulateur).
 
 ## Ce que le script remplit sur Google Play, et ce qui reste manuel
 

@@ -42,7 +42,7 @@ export default function DeleteAccountPage() {
         <h2 className="text-lg font-bold">Ce qui est supprimé</h2>
         <ul className="flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
           <li>Le compte (anonyme ou Google) enregistré dans Firebase Authentication.</li>
-          <li>La progression et les réglages enregistrés en ligne : niveaux, scores, défi du jour, son, mode enfant.</li>
+          <li>La progression et les réglages enregistrés en ligne : niveaux, scores, défi du jour, son, mode Découverte.</li>
         </ul>
       </section>
 

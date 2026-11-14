@@ -18,13 +18,13 @@ Les grilles deviennent de plus en plus riches au fil des niveaux. Les grilles se
 📅 UN DÉFI CHAQUE JOUR
 Chaque jour, une nouvelle grille pour tous les joueurs. Garde ta série en jouant tous les jours.
 
-👶 MODE ENFANT
-Des mots adaptés aux plus jeunes, la lecture à voix haute de chaque mot et l'affichage du nombre de lettres. Aucune publicité pour les enfants.
+🌱 MODE DÉCOUVERTE
+Pour débuter en douceur : des mots courts et simples, la lecture à voix haute de chaque mot trouvé et l'affichage du nombre de lettres.
 
 ✨ ET AUSSI
 • Des mots bonus à trouver pour gagner des points
 • Sons activables ou désactivables
-• Fonctionne sans connexion Internet
+• Se joue sans connexion Internet, dès le premier lancement (la connexion Google et les publicités demandent Internet)
 • Connexion Google facultative pour retrouver ta progression sur un autre appareil
 • Sans compte obligatoire, sans achat intégré
 
@@ -37,14 +37,16 @@ Motissimo est édité par JavaChrist. Une question, une idée de mot ? Écris-no
 Version 1.0 : première version de Motissimo sur Android.
 • 15 niveaux de mots à retrouver
 • Défi du jour
-• Mode enfant avec lecture à voix haute
+• Mode Découverte : mots simples, lus à voix haute
 • Jeu hors ligne
 
 ## À renseigner dans Play Console (rappel)
 - Catégorie : Jeux > Mots
 - Adresse e-mail de contact : support@javachrist.fr
 - Politique de confidentialité : https://motissimo.vercel.app/confidentialite (après redéploiement)
-- Public cible : 13 ans et plus (le mode enfant existe mais l'app n'est pas déclarée « Famille » tant que les pubs adultes sont présentes ; à revérifier avec la politique Families)
+- Public cible : 13 ans et plus. Le mode Découverte est un niveau de difficulté (mots courts, lecture à voix haute), pas un mode pour enfants : l'app n'est pas déclarée « Famille ».
+- Hors connexion : vérifié le 14/11/2026 sur émulateur Android 16, Wi-Fi et données coupés : premier lancement à froid, niveau 1 terminé, défi du jour en mode Découverte. Sans réseau : pas de connexion Google, ni bannière, ni vidéo promo.
+- Tags proposés (noms exacts de la liste Play Console) : Jeux de lettres, Recherche de mots, Casse-tête, Réflexion. « Hors ligne » et « Solo » n’existent pas comme tags ; « Mots croisés » ne décrit pas le jeu.
 - Annonces : oui (AdMob + vidéos promo propres)
 - ID de publicité : Non (permissions AD_ID et ADSERVICES retirées du manifeste depuis le versionCode 2)
 - Sécurité des données : compte (ID Firebase, e-mail si Google), progression ; côté publicité, données collectées par le SDK AdMob (adresse IP, App Set ID, appareil, interactions), sans identifiant publicitaire ; chiffrées en transit ; suppression sur demande à support@javachrist.fr

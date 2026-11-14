@@ -54,6 +54,13 @@ describe("Firestore", () => {
     await assertSucceeds(setDoc(doc(db, "apps/souspli"), { name: "SousPli" }));
   });
 
+  it("laisse tout le monde lire les grilles, mais seul l'admin les écrit", async () => {
+    await assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), "puzzles/p1")));
+    await assertFails(setDoc(doc(env.unauthenticatedContext().firestore(), "puzzles/p1"), { words: ["MOT"] }));
+    await assertFails(setDoc(doc(anonymous().firestore(), "puzzles/p1"), { words: ["MOT"] }));
+    await assertSucceeds(setDoc(doc(admin().firestore(), "puzzles/p1"), { words: ["MOT"] }));
+  });
+
   it("ne donne pas les droits admin à un simple e-mail", async () => {
     const ctx = env.authenticatedContext("u", { email: "contact@javachrist.fr", email_verified: true });
     await assertFails(setDoc(doc(ctx.firestore(), "campaigns/c3"), { status: "active" }));

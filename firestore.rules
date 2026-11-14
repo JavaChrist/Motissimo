@@ -6,9 +6,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.admin == true;
     }
 
+    // Grilles en ligne : lues par tous les joueurs, écrites par l'administration seule.
+    // Les grilles du jeu sont dans l'application : aucun joueur n'a à en écrire.
     match /puzzles/{id} {
       allow read: if true;
-      allow create, update: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     match /users/{uid} {

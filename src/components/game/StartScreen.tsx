@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Baby, CalendarDays, Hash, LayoutGrid, LogIn, Play, Shield, User, Volume2, VolumeX } from "lucide-react";
+import { CalendarDays, Hash, LayoutGrid, LogIn, Play, Shield, Sprout, User, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 
 interface StartScreenProps {
@@ -167,12 +167,12 @@ export function StartScreen({
         )}
 
         <div className="grid grid-cols-3 gap-2 pt-1">
-          <Toggle icon={Baby} label="Enfant" pressed={childMode} onClick={onToggleChild} />
+          <Toggle icon={Sprout} label="Découverte" pressed={childMode} onClick={onToggleChild} />
           <Toggle icon={Hash} label="Chiffres" pressed={showCounts} onClick={onToggleCounts} />
           <Toggle icon={soundOn ? Volume2 : VolumeX} label="Sons" pressed={soundOn} onClick={onToggleSound} />
         </div>
         {childMode && (
-          <p className="text-center text-xs text-white/60">Mots simples, lus à voix haute</p>
+          <p className="text-center text-xs text-white/60">Mode Découverte : mots courts et simples, lus à voix haute</p>
         )}
 
         {isConfigured && !userName && onSignIn && (
@@ -219,7 +219,7 @@ function Toggle({
   pressed,
   onClick,
 }: {
-  icon: typeof Baby;
+  icon: typeof Sprout;
   label: string;
   pressed: boolean;
   onClick: () => void;

@@ -1,5 +1,5 @@
 Version 1.0 : première version de Motissimo sur Android.
 • 15 niveaux de mots à retrouver
 • Défi du jour
-• Mode enfant avec lecture à voix haute
+• Mode Découverte : mots simples, lus à voix haute
 • Jeu hors ligne

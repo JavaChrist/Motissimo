@@ -2,7 +2,7 @@
  * Mots refusés comme mots bonus (et retirés de la liste des mots acceptés).
  *
  * Le dictionnaire vient de Lexique 3.83 : il contient des grossièretés, des insultes, du vocabulaire
- * sexuel, des drogues et de l'alcool. Motissimo vise les 13 ans et plus, et le mode « Enfant » lit
+ * sexuel, des drogues et de l'alcool. Motissimo vise les 13 ans et plus, et le mode « Découverte » lit
  * les mots bonus à voix haute : ces mots ne doivent jamais être validés.
  *
  * Les formes sont écrites une à une, sans préfixe : un préfixe comme « CON » retirerait aussi CONTE.

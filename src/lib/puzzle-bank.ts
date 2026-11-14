@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, setDoc, type DocumentData } from "firebase/firestore";
+import { collection, getDocs, type DocumentData } from "firebase/firestore";
 import { BANNED_WORDS } from "./banned-words";
 import { getFirebaseDb, isFirebaseConfigured } from "./firebase";
 import { LEVELS, type Level } from "./levels";
@@ -142,38 +142,13 @@ function asPuzzle(id: string, data: DocumentData): Puzzle | null {
   };
 }
 
-async function seedMissing(remoteIds: Set<string>) {
-  const db = getFirebaseDb();
-  const missing = LOCAL_PUZZLES.filter((puzzle) => !remoteIds.has(puzzle.id));
-  await Promise.all(
-    missing.map((puzzle) =>
-      setDoc(doc(db, "puzzles", puzzle.id), {
-        id: puzzle.id,
-        title: puzzle.title,
-        theme: puzzle.theme,
-        words: puzzle.words,
-        grid: puzzle.grid.map((row) => row.join("")),
-        size: puzzle.size,
-        child: puzzle.child,
-        ...(puzzle.levelId === undefined ? {} : { levelId: puzzle.levelId }),
-        rows: puzzle.grid.length,
-        cols: puzzle.grid[0]?.length ?? 3,
-      })
-    )
-  );
-}
-
 export async function loadPuzzleBank(): Promise<Puzzle[]> {
   if (!isFirebaseConfigured()) return LOCAL_PUZZLES;
 
   try {
     const db = getFirebaseDb();
     const snap = await getDocs(collection(db, "puzzles"));
-    const remoteIds = new Set(snap.docs.map((item) => item.id));
-    await seedMissing(remoteIds).catch((error) => {
-      console.error("Enregistrement des grilles impossible", error);
-    });
-
+    // Lecture seule : les règles Firestore réservent l'écriture des grilles à l'administration.
     const byId = new Map(LOCAL_PUZZLES.map((puzzle) => [puzzle.id, puzzle]));
     for (const item of snap.docs) {
       const puzzle = asPuzzle(item.id, item.data());

@@ -58,18 +58,23 @@ vercel
 
 Ajoutez vos variables d'environnement Firebase dans les paramètres du projet Vercel.
 
-## Stores mobile (PWA)
+## Règles Firestore
 
-L'app est une PWA complète, prête pour :
+`firestore.rules` : chaque joueur lit et écrit seulement `users/{son uid}`. Les grilles en ligne (`puzzles`) sont lisibles par tous et modifiables par l'administration seule. Les grilles du jeu sont dans l'application : le client ne les écrit plus.
 
-- **Google Play Store** : via [PWABuilder](https://www.pwabuilder.com/) ou [Trusted Web Activity (TWA)](https://developer.chrome.com/docs/android/trusted-web-activity)
-- **Apple App Store** : via [PWABuilder](https://www.pwabuilder.com/) (wrapper natif)
+Tests des règles, sur l'émulateur (le dossier temporaire court évite l'erreur Java « UnixDomainSockets.connect Invalid argument » sous Windows) :
 
-### Prérequis pour les stores
+```bash
+TMP='C:\tmp\motissimo' TEMP='C:\tmp\motissimo' JAVA_TOOL_OPTIONS='-Djdk.net.unixdomain.tmpdir=C:\tmp\motissimo -Djava.io.tmpdir=C:\tmp\motissimo' npm run test:rules
+```
 
-1. Générer des icônes PNG (192x192, 512x512) à partir des SVG dans `/public/icons/`
-2. Ajouter des screenshots au `manifest.json`
-3. Configurer un domaine HTTPS (fourni par Vercel)
+Déploiement en production, seulement après accord : `firebase deploy --only firestore:rules`.
+
+## Application Android (Google Play)
+
+L'application Android est construite avec Capacitor (`android/`). Construction de l'AAB, envoi en test interne et remplissage de la Play Console : voir [`docs/play-release.md`](docs/play-release.md). Texte de la fiche : [`store/play-listing.fr.md`](store/play-listing.fr.md).
+
+`public/app-ads.txt` déclare l'éditeur AdMob. Il est servi à la racine du site (`https://motissimo.vercel.app/app-ads.txt`), le site déclaré dans la Play Console.
 
 ## Comment jouer
 
