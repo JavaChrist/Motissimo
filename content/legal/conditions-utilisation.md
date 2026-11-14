@@ -2,7 +2,7 @@
 
 # Conditions d’utilisation — Motissimo
 
-Version 0.4.0 — 2026-11-14
+Version 0.5.0 — 2026-11-14
 
 ## Service et éditeur
 
@@ -31,7 +31,7 @@ L’utilisateur respecte les droits des tiers, la sécurité du service et la r�
 
 ## Propriété intellectuelle
 
-L’usage du service donne un droit d’utilisation personnel dans le périmètre des fonctionnalités et offres souscrites. Les licences tierces et droits impératifs restent applicables.
+L’usage du service donne un droit d’utilisation personnel dans le périmètre des fonctionnalités de Motissimo. Les licences tierces et droits impératifs restent applicables.
 
 ## Responsabilité, suspension et fin de service
 

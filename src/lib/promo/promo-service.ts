@@ -12,8 +12,9 @@ import {
   type Promo,
 } from "./types";
 
-const SHOWN_KEY = "promo_last_shown";
-const CATALOG_KEY = "promo_catalog_";
+// Anciennes clés (versions 1.0.1 et antérieures) : l'état des promotions restait sur l'appareil.
+const LEGACY_SHOWN_KEY = "promo_last_shown";
+const LEGACY_CATALOG_PREFIX = "promo_catalog_";
 
 interface LastShown {
   id: string;
@@ -25,30 +26,30 @@ interface CachedCatalog {
   campaigns: Promo[];
 }
 
-function readJson<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
+// En mémoire seulement : rien n'est écrit sur l'appareil, tout repart de zéro à chaque lancement.
+let lastShown: LastShown | null = null;
+const catalogs = new Map<string, CachedCatalog>();
 
-function writeJson(key: string, value: unknown) {
+/** Efface les clés des anciennes versions. Appelé au chargement du module. */
+export function removeLegacyPromoKeys() {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i));
+    for (const key of keys) {
+      if (key && (key === LEGACY_SHOWN_KEY || key.startsWith(LEGACY_CATALOG_PREFIX))) localStorage.removeItem(key);
+    }
   } catch {}
 }
 
+if (typeof window !== "undefined") removeLegacyPromoKeys();
+
 export function markPromoShown(id: string) {
-  writeJson(SHOWN_KEY, { id, at: Date.now() } satisfies LastShown);
+  lastShown = { id, at: Date.now() };
 }
 
 /** Adulte confirmé, connexion disponible et délai minimum écoulé. */
 export function canShowPromo(): boolean {
   if (!isAdult() || !navigator.onLine || !isFirebaseConfigured()) return false;
-  const last = readJson<LastShown>(SHOWN_KEY);
-  return !last || Date.now() - last.at >= COOLDOWN_MS;
+  return !lastShown || Date.now() - lastShown.at >= COOLDOWN_MS;
 }
 
 function hostOf(url: string): string | null {
@@ -91,8 +92,7 @@ async function fetchCatalog(sourceAppId: string): Promise<Promo[]> {
 }
 
 async function loadCampaigns(sourceAppId: string): Promise<Promo[]> {
-  const key = CATALOG_KEY + sourceAppId;
-  const cached = readJson<CachedCatalog>(key);
+  const cached = catalogs.get(sourceAppId) ?? null;
   const age = cached ? Date.now() - cached.fetchedAt : Infinity;
   if (cached && age < CATALOG_TTL_MS) return cached.campaigns;
 
@@ -102,7 +102,7 @@ async function loadCampaigns(sourceAppId: string): Promise<Promo[]> {
       new Promise<null>((resolve) => setTimeout(() => resolve(null), FETCH_TIMEOUT_MS)),
     ]);
     if (fresh) {
-      writeJson(key, { fetchedAt: Date.now(), campaigns: fresh } satisfies CachedCatalog);
+      catalogs.set(sourceAppId, { fetchedAt: Date.now(), campaigns: fresh });
       return fresh;
     }
   } catch {}
@@ -113,7 +113,7 @@ async function loadCampaigns(sourceAppId: string): Promise<Promo[]> {
 export async function pickPromo(sourceAppId: string): Promise<Promo | null> {
   const eligible = (await loadCampaigns(sourceAppId)).filter((promo) => isEligible(promo));
   if (eligible.length === 0) return null;
-  const lastId = readJson<LastShown>(SHOWN_KEY)?.id;
+  const lastId = lastShown?.id;
   const pool = eligible.length > 1 ? eligible.filter((promo) => promo.id !== lastId) : eligible;
   let ticket = Math.random() * pool.reduce((sum, promo) => sum + promo.weight, 0);
   for (const promo of pool) {

@@ -6,6 +6,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "./firebase";
+import { discardLocalProgress, PROGRESS_KEY } from "./progress-owner";
 
 export interface UserProgress {
   completedLevels: Record<string, { stars: number; score: number; bestTime: number }>;
@@ -37,7 +38,15 @@ export function soundIsOn(progress: UserProgress | null): boolean {
   return progress?.soundEnabled !== false;
 }
 
-const LOCAL_KEY = "wordtiles_progress";
+const LOCAL_KEY = PROGRESS_KEY;
+
+/**
+ * Accès refusé à son propre document : la suppression du compte est en cours (marque
+ * deleted_accounts/{uid}, voir firestore.rules). La copie locale de ce compte est alors effacée.
+ */
+function isAccountBeingDeleted(error: unknown): boolean {
+  return (error as { code?: string } | null)?.code === "permission-denied";
+}
 
 function getLocalProgress(): UserProgress {
   if (typeof window === "undefined") return { ...DEFAULT_PROGRESS };
@@ -71,7 +80,11 @@ export async function loadProgress(uid: string | null): Promise<UserProgress> {
     }
     await setDoc(ref, { ...local, updatedAt: serverTimestamp() }, { merge: true });
     return local;
-  } catch {
+  } catch (error) {
+    if (isAccountBeingDeleted(error)) {
+      discardLocalProgress();
+      return { ...DEFAULT_PROGRESS };
+    }
     return local;
   }
 }
@@ -84,8 +97,11 @@ export async function saveProgress(uid: string | null, progress: UserProgress) {
   try {
     const db = getFirebaseDb();
     const ref = doc(db, "users", uid);
-    await updateDoc(ref, { ...progress, updatedAt: serverTimestamp() }).catch(() =>
-      setDoc(ref, { ...progress, updatedAt: serverTimestamp() })
-    );
-  } catch {}
+    await updateDoc(ref, { ...progress, updatedAt: serverTimestamp() }).catch((error) => {
+      if (isAccountBeingDeleted(error)) throw error;
+      return setDoc(ref, { ...progress, updatedAt: serverTimestamp() });
+    });
+  } catch (error) {
+    if (isAccountBeingDeleted(error)) discardLocalProgress();
+  }
 }

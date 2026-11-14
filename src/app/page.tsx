@@ -26,16 +26,18 @@ import { AdBanner } from "@/components/ads/AdBanner";
 type Screen = "start" | "levels" | "game";
 
 export default function Home() {
-  const { user, signInWithGoogle, isConfigured } = useAuth();
+  const { user, loading, signInWithGoogle, isConfigured } = useAuth();
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [screen, setScreen] = useState<Screen>("start");
   const [bank, setBank] = useState<Puzzle[]>(LOCAL_PUZZLES);
 
   const uid = user?.uid ?? "";
 
+  // Après la session Firebase : la copie locale a alors été rattachée à son compte, ou effacée.
   useEffect(() => {
+    if (loading) return;
     loadProgress(uid || null).then(setProgress);
-  }, [uid]);
+  }, [loading, uid]);
 
   useEffect(() => {
     if (isConfigured && !uid) return;

@@ -1,6 +1,7 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { claimLegacyCopy } from "./progress-owner";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "demo-key",
@@ -28,6 +29,15 @@ export function getFirebaseAuth() {
     auth = getAuth(getFirebaseApp());
   }
   return auth;
+}
+
+/**
+ * Auth, une fois la copie locale d'une ancienne version rattachée à son compte : à l'initialisation,
+ * Firebase efface la session d'un compte supprimé, et son uid ne serait plus lisible.
+ */
+export async function getFirebaseAuthReady(): Promise<Auth> {
+  await claimLegacyCopy(firebaseConfig.apiKey);
+  return getFirebaseAuth();
 }
 
 export function getFirebaseDb() {

@@ -60,22 +60,34 @@ export default function DeleteAccountPage() {
         <ul className="flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
           <li>Le compte (anonyme ou Google) enregistré dans Firebase Authentication.</li>
           <li>La progression et les réglages enregistrés en ligne : niveaux, scores, défi du jour, son, mode Découverte.</li>
+          <li>
+            Sur un appareil resté connecté à ce compte, la copie locale de la progression : elle est effacée au lancement
+            suivant, sans être renvoyée en ligne.
+          </li>
         </ul>
+        <p className="text-muted-foreground">
+          Au début de la suppression, une marque contenant l&apos;identifiant technique du compte bloque tout accès à la
+          progression en ligne, y compris depuis un appareil encore connecté. Elle est conservée 24 heures après la fin de
+          la suppression, le temps que les dernières sessions expirent (une heure au plus), puis effacée.
+        </p>
       </section>
 
       <section className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-5">
         <h2 className="text-lg font-bold">Ce qui reste</h2>
         <ul className="flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
           <li>
-            Les données stockées sur votre appareil (progression, année de naissance) : effacez-les en vidant les données
-            du site ou de l&apos;application, ou en désinstallant l&apos;application.
+            Sur un appareil qui n&apos;est plus relancé, les données stockées localement (progression, année de naissance) :
+            effacez-les depuis la page Mes données, en vidant les données du site ou de l&apos;application, ou en
+            désinstallant l&apos;application.
           </li>
           <li>
             Les données déjà transmises à Google pour la publicité, gérées par Google selon ses propres règles de
             conservation.
           </li>
           <li>
-            Les journaux techniques de l&apos;hébergeur Vercel, conservés selon les règles de conservation de Vercel.
+            Les journaux techniques de la version web chez l&apos;hébergeur Vercel : les requêtes visibles dans ses journaux
+            d&apos;exécution (Runtime Logs) y restent 1 jour. Vercel peut conserver d&apos;autres données techniques selon
+            ses propres règles.
           </li>
         </ul>
       </section>

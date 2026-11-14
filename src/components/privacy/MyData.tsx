@@ -5,15 +5,16 @@ import { Mail, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { openPrivacyOptions, privacyOptionsRequired } from "@/lib/ads/consent";
-import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { getFirebaseAuthReady, isFirebaseConfigured } from "@/lib/firebase";
 import { isNativeApp } from "@/lib/platform";
 import { clearBirthYear, useAgeStatus } from "@/lib/promo/age-gate";
+import { OWNER_KEY, PROGRESS_KEY } from "@/lib/progress-owner";
 
 const SUPPORT = "support@javachrist.fr";
-const PROGRESS_KEY = "wordtiles_progress";
 const BIRTH_YEAR_KEY = "promo_birth_year";
-const PROMO_SHOWN_KEY = "promo_last_shown";
-const PROMO_CATALOG_PREFIX = "promo_catalog_";
+// Clés des promotions des versions 1.0.1 et antérieures : plus écrites, effacées si elles restent.
+const LEGACY_PROMO_SHOWN_KEY = "promo_last_shown";
+const LEGACY_PROMO_CATALOG_PREFIX = "promo_catalog_";
 const UPDATE_PREFIX = "motissimo.pwa.";
 
 const card = "flex flex-col gap-3 rounded-3xl border border-border bg-card p-5";
@@ -26,8 +27,7 @@ interface DeviceData {
   dailyStreak: number;
   settings: boolean;
   birthYear: string | null;
-  promoShown: boolean;
-  promoCatalogs: number;
+  owner: boolean;
   updateKeys: number;
 }
 
@@ -49,8 +49,7 @@ function readDeviceData(): DeviceData | null {
       dailyStreak: typeof progress?.dailyStreak === "number" ? progress.dailyStreak : 0,
       settings: progress !== null && ["childMode", "showCounts", "soundEnabled"].some((field) => field in progress),
       birthYear: localStorage.getItem(BIRTH_YEAR_KEY),
-      promoShown: localStorage.getItem(PROMO_SHOWN_KEY) !== null,
-      promoCatalogs: keys.filter((key) => key.startsWith(PROMO_CATALOG_PREFIX)).length,
+      owner: localStorage.getItem(OWNER_KEY) !== null,
       updateKeys: keys.filter((key) => key.startsWith(UPDATE_PREFIX)).length,
     };
   } catch {
@@ -64,7 +63,7 @@ const noSubscription = () => () => {};
 
 function isEmpty(data: DeviceData | null): boolean {
   if (!data) return true;
-  return !data.completedLevels && !data.totalScore && !data.settings && !data.birthYear && !data.promoShown && !data.promoCatalogs && !data.updateKeys;
+  return !data.completedLevels && !data.totalScore && !data.settings && !data.birthYear && !data.owner && !data.updateKeys;
 }
 
 /** Compte Firebase actuel, sans en créer : cette page ne connecte personne. */
@@ -72,7 +71,15 @@ function useCurrentUser(): { user: User | null; ready: boolean } {
   const [state, setState] = useState<{ user: User | null; ready: boolean }>({ user: null, ready: !isFirebaseConfigured() });
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
-    return onAuthStateChanged(getFirebaseAuth(), (user) => setState({ user, ready: true }));
+    let unsub = () => {};
+    let cancelled = false;
+    getFirebaseAuthReady().then((auth) => {
+      if (!cancelled) unsub = onAuthStateChanged(auth, (user) => setState({ user, ready: true }));
+    });
+    return () => {
+      cancelled = true;
+      unsub();
+    };
   }, []);
   return state;
 }
@@ -145,8 +152,7 @@ function DeviceSummary({ data }: { data: DeviceData | null }) {
     data.dailyStreak > 0 && `Série du défi du jour : ${data.dailyStreak} jour${data.dailyStreak > 1 ? "s" : ""}`,
     data.settings && "Vos réglages : mode Découverte, chiffres, sons",
     data.birthYear && `Année de naissance : ${data.birthYear}`,
-    data.promoShown && "La dernière vidéo de JavaChrist Promotions affichée",
-    data.promoCatalogs > 0 && "La liste des vidéos de JavaChrist Promotions, gardée en cache",
+    data.owner && "L'identifiant du compte auquel appartient cette progression",
     data.updateKeys > 0 && "L'état des mises à jour de l'application",
   ].filter((item): item is string => Boolean(item));
   return (
@@ -178,7 +184,7 @@ export function MyData() {
     // L'année d'abord : sans réponse d'âge, aucune annonce n'est demandée.
     clearBirthYear();
     for (const key of storageKeys()) {
-      if (key === PROGRESS_KEY || key === PROMO_SHOWN_KEY || key.startsWith(PROMO_CATALOG_PREFIX) || key.startsWith(UPDATE_PREFIX)) {
+      if (key === PROGRESS_KEY || key === OWNER_KEY || key === LEGACY_PROMO_SHOWN_KEY || key.startsWith(LEGACY_PROMO_CATALOG_PREFIX) || key.startsWith(UPDATE_PREFIX)) {
         try {
           localStorage.removeItem(key);
         } catch {}
@@ -231,8 +237,8 @@ export function MyData() {
         <h2 className="text-lg font-bold">Effacer les données de cet appareil</h2>
         <p className="text-muted-foreground">
           Efface la progression, les réglages et l&apos;année de naissance enregistrés sur cet appareil, et vous redemande
-          votre année de naissance. Votre compte et la progression enregistrée en ligne ne sont pas supprimés : elle revient
-          au prochain lancement.
+          votre année de naissance. Votre compte et la progression enregistrée en ligne ne sont pas supprimés : la progression
+          enregistrée en ligne est restaurée au prochain lancement.
         </p>
         <button
           type="button"

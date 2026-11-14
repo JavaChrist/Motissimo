@@ -13,8 +13,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Progression d'un joueur. Pendant et juste après une suppression de compte, la marque
+    // deleted_accounts/{uid} bloque l'ancien jeton (valable une heure au plus) : ni lecture ni écriture.
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if request.auth != null && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/deleted_accounts/$(uid));
+    }
+
+    // Marques de suppression : posées et effacées par scripts/delete-account.mjs, jamais par un client.
+    match /deleted_accounts/{uid} {
+      allow read, write: if false;
     }
 
     // Référentiel des applications et campagnes (brouillons compris) : administration seule.

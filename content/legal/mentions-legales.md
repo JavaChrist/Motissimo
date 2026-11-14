@@ -2,22 +2,30 @@
 
 # Mentions légales — Motissimo
 
-Version 0.4.0 — 2026-11-14
+Version 0.5.0 — 2026-11-14
 
 ## Éditeur et contact
 
 JavaChrist est le nom commercial de Christian Grohens, Entrepreneur individuel (EI), exerçant sous le nom commercial JavaChrist.
+
 Adresse : 5 rue Maurice Fonvieille, 31120 Portet-sur-Garonne, France. Courriel : support@javachrist.fr. Téléphone : 09 52 62 31 71.
+
 Immatriculation : SIREN : 338 593 312 ; SIRET : 338 593 312 00030. Régime/identification TVA : TVA non applicable, article 293 B du Code général des impôts.
+
 Capital social si applicable : Sans objet — entreprise individuelle.
+
 Directeur de publication : Christian Grohens.
 
 ## Application et hébergement
 
 Motissimo : https://motissimo.vercel.app.
+
 Jeu de mots mêlés en français : grilles par niveaux, défi du jour et mode Découverte. Disponible sur le web (motissimo.vercel.app) et en application Android. Le jeu est entièrement gratuit, sans achat. Le site web n'affiche aucune publicité tierce ; l'application Android affiche une bannière publicitaire Google AdMob aux seuls joueurs majeurs.
+
 Hébergeur : Vercel Inc., 440 N Barranca Avenue #4133, Covina, CA 91723, États-Unis, téléphone non publié (contact : https://vercel.com/contact).
+
 Régions techniques utilisées : Site statique distribué via le CDN mondial Vercel, sans fonction serveur traitant de données personnelles.
+
 Support de l’application : support@javachrist.fr.
 
 ## Propriété intellectuelle

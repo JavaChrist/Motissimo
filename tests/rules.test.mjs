@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 
 let env;
@@ -59,6 +59,35 @@ describe("Firestore", () => {
     await assertFails(setDoc(doc(env.unauthenticatedContext().firestore(), "puzzles/p1"), { words: ["MOT"] }));
     await assertFails(setDoc(doc(anonymous().firestore(), "puzzles/p1"), { words: ["MOT"] }));
     await assertSucceeds(setDoc(doc(admin().firestore(), "puzzles/p1"), { words: ["MOT"] }));
+  });
+
+  it("laisse un joueur lire et écrire sa seule progression", async () => {
+    const db = env.authenticatedContext("player1").firestore();
+    await assertSucceeds(setDoc(doc(db, "users/player1"), { totalScore: 10 }));
+    await assertSucceeds(getDoc(doc(db, "users/player1")));
+    await assertFails(getDoc(doc(db, "users/player2")));
+    await assertFails(setDoc(doc(db, "users/player2"), { totalScore: 10 }));
+  });
+
+  it("bloque l'ancien jeton d'un compte en cours de suppression : ni lecture ni écriture", async () => {
+    const db = env.authenticatedContext("deleted1").firestore();
+    await assertSucceeds(setDoc(doc(db, "users/deleted1"), { totalScore: 50 }));
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "deleted_accounts/deleted1"), { requestedAt: new Date() }));
+    await assertFails(getDoc(doc(db, "users/deleted1")));
+    await assertFails(setDoc(doc(db, "users/deleted1"), { totalScore: 60 }));
+    await assertFails(updateDoc(doc(db, "users/deleted1"), { totalScore: 60 }));
+    await assertFails(deleteDoc(doc(db, "users/deleted1")));
+    // Document déjà supprimé par le script : l'ancien jeton ne peut pas le recréer.
+    await env.withSecurityRulesDisabled((ctx) => deleteDoc(doc(ctx.firestore(), "users/deleted1")));
+    await assertFails(setDoc(doc(db, "users/deleted1"), { totalScore: 50 }));
+  });
+
+  it("réserve les marques de suppression aux scripts : aucun client, même admin", async () => {
+    for (const ctx of [env.unauthenticatedContext(), anonymous(), admin(), env.authenticatedContext("deleted1")]) {
+      await assertFails(getDoc(doc(ctx.firestore(), "deleted_accounts/deleted1")));
+      await assertFails(setDoc(doc(ctx.firestore(), "deleted_accounts/x"), { requestedAt: new Date() }));
+      await assertFails(deleteDoc(doc(ctx.firestore(), "deleted_accounts/deleted1")));
+    }
   });
 
   it("ne donne pas les droits admin à un simple e-mail", async () => {

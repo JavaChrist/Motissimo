@@ -2,7 +2,7 @@
 
 # Vos droits sur les données — Motissimo
 
-Version 0.4.0 — 2026-11-14
+Version 0.5.0 — 2026-11-14
 
 ## Nous contacter
 
@@ -24,7 +24,7 @@ La page Mes données du jeu résume les données enregistrées sur l'appareil et
 
 ## Suppression
 
-La page Mes données du jeu affiche les données enregistrées sur l'appareil et l'identifiant du compte. Le bouton « Effacer ces données » efface, après confirmation, la progression, les réglages, l'année de naissance et l'état des vidéos de promotion stockés sur l'appareil ; la progression enregistrée en ligne avec le compte n'est pas supprimée par cette action. Les données de l'appareil s'effacent aussi en vidant les données du site ou de l'application, ou en désinstallant l'application. La suppression du compte et de la progression enregistrée en ligne se demande à support@javachrist.fr, par exemple avec le bouton « Demander la suppression du compte » de la page Mes données, qui prépare un e-mail contenant l'identifiant du compte ; à défaut, indiquez l'adresse e-mail du compte Google utilisé pour vous connecter. Un compte anonyme n'est relié à aucun nom ni aucune adresse e-mail : sans son identifiant, il ne peut pas être retrouvé, par exemple après la désinstallation de l'application. La suppression est réalisée dans un délai d'un mois. Ces effacements ne suppriment pas les données déjà transmises à Google pour la publicité. Les journaux techniques de l'hébergeur ne sont pas accessibles depuis le jeu : pour toute demande les concernant, écrivez à support@javachrist.fr.
+La page Mes données du jeu affiche les données enregistrées sur l'appareil et l'identifiant du compte. Le bouton « Effacer ces données » efface, après confirmation, la progression, les réglages, l'année de naissance et l'identifiant du compte stockés sur l'appareil ; la progression enregistrée en ligne avec le compte n'est pas supprimée par cette action. Les données de l'appareil s'effacent aussi en vidant les données du site ou de l'application, ou en désinstallant l'application. La suppression du compte et de la progression enregistrée en ligne se demande à support@javachrist.fr, par exemple avec le bouton « Demander la suppression du compte » de la page Mes données, qui prépare un e-mail contenant l'identifiant du compte ; à défaut, indiquez l'adresse e-mail du compte Google utilisé pour vous connecter. Un compte anonyme n'est relié à aucun nom ni aucune adresse e-mail : sans son identifiant, il ne peut pas être retrouvé, par exemple après la désinstallation de l'application. La suppression est réalisée dans un délai d'un mois. Elle commence par une marque contenant l'identifiant du compte, qui bloque toute lecture et toute écriture de la progression en ligne, y compris depuis un appareil encore connecté ; le compte et la progression sont ensuite supprimés. La marque est conservée 24 heures après la fin de la suppression, le temps que les dernières sessions expirent (une heure au plus), puis effacée. Un appareil resté connecté à ce compte efface sa copie de la progression au lancement suivant, sans la renvoyer en ligne. Ces effacements ne suppriment pas les données déjà transmises à Google pour la publicité. Les journaux techniques de l'hébergeur ne sont pas accessibles depuis le jeu ; les requêtes visibles dans les journaux d'exécution de Vercel y restent 1 jour. Pour toute demande les concernant, écrivez à support@javachrist.fr.
 
 ## Préférences publicitaires
 
