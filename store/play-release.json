@@ -4,7 +4,7 @@
   "bundle": "android/app/build/outputs/bundle/release/app-release.aab",
   "gradleFile": "android/app/build.gradle",
   "uploadCertSha256": "A9:8B:49:E3:BD:9C:1E:3A:BF:7C:CD:59:AB:32:81:D1:3E:8F:21:7E:F4:3A:E2:52:60:CC:AB:F3:53:B7:01:E0",
-  "lastUploadedVersionCode": 0,
+  "lastUploadedVersionCode": 3,
   "credentials": "~/.geo-play/motissimo-release.json",
   "bundleJson": [],
   "releaseNotes": { "fr-FR": "store/release-notes/fr-FR.txt" }
