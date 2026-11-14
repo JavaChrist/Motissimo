@@ -61,6 +61,14 @@ Rapport JSON hors du dépôt : `~/.geo-play/reports/fr.javachrist.motissimo/<dat
 - Vérifier l'AAB : aucune permission `AD_ID` ni `ADSERVICES` (`aapt2 dump badging` sur l'APK release, ou le manifeste du bundle).
 - Hors connexion : la fiche promet un jeu sans Internet dès le premier lancement. Le revérifier si le chargement des grilles change (test du 14/11/2026 : émulateur, Wi-Fi et données coupés par `adb shell svc wifi disable` et `svc data disable` ; le mode avion seul ne coupait pas le réseau de l'émulateur).
 
+## Captures de la fiche
+
+Six captures 1080×1920 dans `store/screenshots/phone/`, refaites après tout changement visible de l'écran d'accueil ou du jeu :
+
+1. `npm run build:android` (produit `out/`).
+2. Dans un terminal : `node scripts/serve-offline.mjs out 4319` (réseau sortant coupé : rien n'est écrit dans Firebase).
+3. Dans un autre : `node scripts/capture-store.mjs store/screenshots/phone .` (Chrome headless).
+
 ## Ce que le script remplit sur Google Play, et ce qui reste manuel
 
 | Élément | Qui |
