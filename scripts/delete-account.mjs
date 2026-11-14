@@ -39,7 +39,8 @@ const FIRESTORE = `${EMULATOR ? `http://${FIRESTORE_HOST}` : "https://firestore.
 const IDENTITY = `${EMULATOR ? `http://${AUTH_HOST}/identitytoolkit.googleapis.com` : "https://identitytoolkit.googleapis.com"}/v1/projects/${PROJECT}`;
 const MARKERS = "deleted_accounts";
 // Un jeton d'identification Firebase vaut une heure au plus et ne se renouvelle plus une fois le compte
-// supprimé : une heure suffirait. La marge couvre l'écart d'horloge et laisse vérifier le lendemain.
+// supprimé : une heure suffirait. La marge couvre l'écart d'horloge. La purge (--purge --confirm) se lance
+// une fois ces 24 heures écoulées : avant, la marque n'est pas expirée et reste en place.
 const MARKER_KEEP_MS = 24 * 60 * 60 * 1000;
 // Client OAuth public du CLI Firebase (publié dans firebase-tools), utilisé pour rafraîchir sa session.
 const CLI_CLIENT_ID = "563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com";
@@ -190,7 +191,7 @@ async function deleteAccount(token, uid) {
     { method: "PATCH", body: JSON.stringify({ fields: { completedAt: timestamp(now), expireAt: timestamp(expire) } }) },
   );
   if (!dated.ok) fail(`datation de la marque refusée (${dated.status}) : relancez la même commande`);
-  console.log(`OK 5/5 suppression terminée. Marque à effacer après le ${expire.toISOString()} (--purge --confirm)`);
+  console.log(`OK 5/5 suppression terminée. Marque à effacer après le ${expire.toISOString()} : relancez node scripts/delete-account.mjs --purge --confirm une fois cette heure passée`);
 }
 
 async function listMarkers(token) {
@@ -277,7 +278,7 @@ async function main() {
 
   await deleteAccount(token, uid);
   await purge(token, true);
-  console.log("Répondre à la demande : suppression faite. Les données locales de l'appareil restent à effacer par le joueur.");
+  console.log("Répondre à la demande : suppression faite. Un appareil relancé efface sa copie locale ; les autres données de l'appareil s'effacent depuis Mes données.");
 }
 
 main().catch((error) => fail(error.message));

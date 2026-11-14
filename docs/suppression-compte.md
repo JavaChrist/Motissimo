@@ -23,7 +23,8 @@ Le script `scripts/delete-account.mjs` utilise la session du CLI Firebase (`fire
    5. Il note la fin dans la marque (`completedAt`) et fixe son effacement à `expireAt`, soit 24 heures plus tard.
 
    **En cas d'échec** (réseau, droits), relancer la même commande. La marque reste en place et continue de bloquer l'accès jusqu'à la fin.
-4. **Le lendemain, effacer les marques expirées** : `node scripts/delete-account.mjs --purge --confirm`.
+4. **Une fois les 24 heures écoulées, effacer la marque** : `node scripts/delete-account.mjs --purge --confirm`.
+   - Attendre l'heure affichée à l'étape 5/5 (« Marque à effacer après le … »). « Le lendemain » peut être trop tôt selon l'heure : une marque pas encore expirée est gardée, et la purge n'efface rien.
    - Chaque `--confirm` purge aussi les marques expirées.
    - Une marque sans `completedAt` signale une suppression inachevée : le script la garde et l'indique. Relancer alors la suppression de cet uid.
 5. **Répondre à la demande.** Rappeler :
@@ -39,7 +40,7 @@ Sans identifiant ni adresse Google, un compte anonyme ne peut pas être retrouv�
 La marque contient l'uid, une donnée personnelle : elle ne vit que le temps utile.
 
 - Un jeton d'identification Firebase est valable une heure au plus. Il ne peut plus être renouvelé une fois le compte Auth supprimé.
-- Les 24 heures couvrent cette heure, un décalage d'horloge et le passage du lendemain (étape 4).
+- Les 24 heures couvrent cette heure et un décalage d'horloge. La purge de l'étape 4 se lance une fois ces 24 heures écoulées.
 
 ## Limites connues
 
