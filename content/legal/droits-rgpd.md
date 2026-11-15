@@ -1,5 +1,3 @@
-> BROUILLON — informations et clauses à compléter et valider avant publication.
-
 # Vos droits sur les données — Motissimo
 
 Version 0.5.4 — 2026-11-14

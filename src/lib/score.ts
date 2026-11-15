@@ -4,8 +4,11 @@
  * - niveaux : le meilleur score de chaque niveau réussi (un rejeu ne compte que s'il bat ce score) ;
  * - défi du jour : le score de chaque date jouée (dailyScores), une seule fois par date.
  *
- * Le défi d'une date est le même pour tous (puzzleForDay), donc une date sert de clé : deux copies
- * ou deux comptes qui ont joué le même jour ne le comptent qu'une fois, avec le meilleur score.
+ * Un joueur ne joue qu'un défi par date, donc la date sert de clé : deux copies ou deux comptes qui
+ * ont joué le même jour ne le comptent qu'une fois, avec le meilleur score. La grille du défi d'une
+ * date n'est pas forcément la même pour tous : en mode Découverte, elle est tirée parmi les grilles
+ * enfant (puzzleForDay). Deux comptes fusionnés qui ont joué la même date, l'un en Découverte et
+ * l'autre en mode normal, ne gardent donc que le meilleur des deux scores.
  *
  * Aucune importation à l'exécution : ce module est testé tel quel par Node (tests/account-transfer.test.mjs).
  */
