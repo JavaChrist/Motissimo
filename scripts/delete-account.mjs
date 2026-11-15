@@ -41,7 +41,8 @@ const FIRESTORE = `${EMULATOR ? `http://${FIRESTORE_HOST}` : "https://firestore.
 const IDENTITY = `${EMULATOR ? `http://${AUTH_HOST}/identitytoolkit.googleapis.com` : "https://identitytoolkit.googleapis.com"}/v1/projects/${PROJECT}`;
 const MARKERS = "deleted_accounts";
 // Un jeton d'identification Firebase vaut une heure au plus et ne se renouvelle plus une fois le compte
-// supprimé : une heure suffirait. La marge couvre l'écart d'horloge. La purge (--purge --confirm) se lance
+// supprimé : une heure suffirait. La marge couvre l'écart d'horloge. Passé expireAt, la politique TTL
+// Firestore efface la marque (en général sous 24 heures). La purge (--purge --confirm) l'efface plus tôt,
 // une fois ces 24 heures écoulées : avant, la marque n'est pas expirée et reste en place.
 const MARKER_KEEP_MS = 24 * 60 * 60 * 1000;
 // Client OAuth public du CLI Firebase (publié dans firebase-tools), utilisé pour rafraîchir sa session.
@@ -193,7 +194,7 @@ async function deleteAccount(token, uid) {
     { method: "PATCH", body: JSON.stringify({ fields: { completedAt: timestamp(now), expireAt: timestamp(expire) } }) },
   );
   if (!dated.ok) fail(`datation de la marque refusée (${dated.status}) : relancez la même commande`);
-  console.log(`OK 5/5 suppression terminée. Marque à effacer après le ${expire.toISOString()} : relancez node scripts/delete-account.mjs --purge --confirm une fois cette heure passée`);
+  console.log(`OK 5/5 suppression terminée. Marque à effacer après le ${expire.toISOString()} : le TTL Firestore l'efface ensuite, ou node scripts/delete-account.mjs --purge --confirm une fois cette heure passée`);
 }
 
 const UID = /^[A-Za-z0-9]{1,128}$/;
