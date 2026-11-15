@@ -24,8 +24,9 @@ Le script `scripts/delete-account.mjs` utilise la session du CLI Firebase (`fire
    5. Il note la fin dans la marque (`completedAt`) et fixe son effacement à `expireAt`, soit 24 heures plus tard.
 
    **En cas d'échec** (réseau, droits), relancer la même commande. La marque reste en place et continue de bloquer l'accès jusqu'à la fin.
-4. **La marque s'efface seule** : la politique TTL Firestore la supprime après `expireAt`, en général dans les 24 heures qui suivent (l'effacement TTL n'est pas immédiat).
-   - Pour l'effacer dès qu'elle a expiré, sans attendre le TTL : `node scripts/delete-account.mjs --purge --confirm`, après l'heure affichée à l'étape 5/5 (« Marque à effacer après le … »). Une marque pas encore expirée est gardée, et la purge n'efface rien.
+4. **Une fois les 24 heures écoulées, effacer la marque** : `node scripts/delete-account.mjs --purge --confirm`. Les textes légaux annoncent 24 heures : cette purge les tient.
+   - Attendre l'heure affichée à l'étape 5/5 (« Marque à effacer après le … »). Une marque pas encore expirée est gardée, et la purge n'efface rien.
+   - Filet de sécurité : si la purge est oubliée, la politique TTL Firestore efface la marque après `expireAt`, en général dans les 24 heures qui suivent (pas à l'heure exacte).
    - Chaque `--confirm` purge aussi les marques expirées.
    - Une marque sans `completedAt` signale une suppression inachevée : le script la garde et l'indique. Relancer alors la suppression de cet uid.
 5. **Répondre à la demande.** Rappeler :
@@ -59,7 +60,7 @@ Lors de la connexion Google depuis un compte anonyme U :
 La marque contient l'uid, une donnée personnelle : elle ne vit que le temps utile.
 
 - Un jeton d'identification Firebase est valable une heure au plus. Il ne peut plus être renouvelé une fois le compte Auth supprimé.
-- Les 24 heures couvrent cette heure et un décalage d'horloge. Passé `expireAt`, le TTL Firestore efface la marque (en général sous 24 heures) ; la purge de l'étape 4 permet de l'effacer plus tôt.
+- Les 24 heures couvrent cette heure et un décalage d'horloge. La purge de l'étape 4 se lance une fois ces 24 heures écoulées ; le TTL Firestore ne sert que de filet de sécurité.
 
 ## Limites connues
 
@@ -67,7 +68,7 @@ La marque contient l'uid, une donnée personnelle : elle ne vit que le temps uti
 - **Transfert interrompu, puis données de l'application effacées** : la seconde session est perdue, l'appareil ne peut plus supprimer U. U reste lié à G par `transferredTo` ou `transferredFrom`, et il est supprimé avec G sur demande.
 - **Session de U révoquée, compte U existant** : l'appareil ne peut pas supprimer U, le nettoyage reste en attente (et un nouveau passage vers Google attend sa fin). Sur demande, le support supprime U seul : `node scripts/delete-account.mjs <U> --confirm` ; au lancement suivant, le renouvellement répond `USER_NOT_FOUND` et le transfert se termine.
 - **Émulateur Auth** : pour un compte supprimé, il répond `INVALID_REFRESH_TOKEN` (pas `USER_NOT_FOUND`, réponse documentée par Firebase en production, non vérifiée ici) et n'applique pas la révocation des sessions. En local, une suppression faite hors de l'application laisse donc le nettoyage en attente.
-- **Effacement TTL différé** : la politique TTL sur `expireAt` n'efface pas la marque à l'heure exacte, en général dans les 24 heures suivantes. Une marque peut donc vivre jusqu'à environ 48 heures après la fin de la suppression, sauf purge manuelle (étape 4). Les textes légaux et la page `/supprimer-mon-compte` annoncent 24 heures.
+- **Effacement TTL différé** : la politique TTL sur `expireAt` n'efface pas la marque à l'heure exacte, en général dans les 24 heures suivantes. Sans la purge de l'étape 4, une marque peut vivre jusqu'à environ 48 heures après la fin de la suppression, alors que les textes légaux et la page `/supprimer-mon-compte` annoncent 24 heures. La purge manuelle reste donc obligatoire.
 
 ## Tests
 
